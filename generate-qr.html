@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Generator QR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="p-8 bg-gray-100">
+    <div class="no-print max-w-xl mx-auto bg-white p-6 rounded shadow mb-8">
+        <h2 class="font-bold text-xl mb-4">Buat QR Meja</h2>
+        <input type="text" id="link" placeholder="Link Web (contoh: https://cafe.vercel.app/index.html)" class="w-full p-2 border rounded mb-4">
+        <input type="number" id="jml" value="10" class="w-full p-2 border rounded mb-4">
+        <button onclick="make()" class="bg-orange-600 text-white px-4 py-2 rounded font-bold">GENERATE</button>
+        <button onclick="window.print()" class="bg-gray-700 text-white px-4 py-2 rounded font-bold ml-2">PRINT</button>
+    </div>
+    <div id="area" class="grid grid-cols-4 gap-4"></div>
+    <script>
+        function make() {
+            const url = document.getElementById('link').value;
+            const num = document.getElementById('jml').value;
+            const area = document.getElementById('area');
+            area.innerHTML = '';
+            for(let i=1; i<=num; i++) {
+                let no = i<10 ? '0'+i : i;
+                let d = document.createElement('div');
+                d.className = 'bg-white p-4 rounded text-center border break-inside-avoid';
+                d.innerHTML = `<h3 class="font-bold mb-2">MEJA ${no}</h3><div id="qr${i}" class="flex justify-center"></div>`;
+                area.appendChild(d);
+                new QRCode(document.getElementById('qr'+i), {text: `${url}?meja=${no}`, width:120, height:120});
+            }
+        }
+    </script>
+</body>
+</html>

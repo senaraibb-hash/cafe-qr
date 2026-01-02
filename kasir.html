@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <nav class="bg-gray-800 p-4 sticky top-0 z-50 shadow-lg flex justify-between items-center border-b border-gray-700">
+        <div>
+            <h1 class="font-bold text-lg">KASIR<span class="text-orange-500">PRO</span></h1>
+            <p id="status-print" class="text-[10px] text-red-400">Printer Off</p>
+        </div>
+        <button onclick="connectPrinter()" class="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold shadow-lg flex gap-2 items-center hover:bg-blue-500">
+            <i class="fas fa-print"></i> HUBUNGKAN PRINTER
+        </button>
+    </nav>
+
+    <div class="p-4 max-w-6xl mx-auto">
+        <div class="flex gap-2 mb-4">
+            <button onclick="filter('pending')" class="flex-1 bg-gray-700 border-l-4 border-yellow-500 p-3 rounded-lg text-left hover:bg-gray-600">
+                <span class="block text-xs text-gray-400">Menunggu</span>
+                <span id="cnt-pending" class="text-xl font-bold text-yellow-500">0</span>
+            </button>
+            <button onclick="filter('lunas')" class="flex-1 bg-gray-700 border-l-4 border-green-500 p-3 rounded-lg text-left hover:bg-gray-600">
+                <span class="block text-xs text-gray-400">Selesai</span>
+                <span id="cnt-lunas" class="text-xl font-bold text-green-500">0</span>
+            </button>
+        </div>
+
+        <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb';
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // Cek Login
+        if(localStorage.getItem('role') !== 'kasir' && localStorage.getItem('role') !== 'owner') window.location.href = 'login.html';
+
+        // --- BLUETOOTH PRINTER LOGIC (ESC/POS) ---
+        let printerChar = null;
+        async function connectPrinter() {
+            try {
+                const device = await navigator.bluetooth.requestDevice({ filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }] });
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+                printerChar = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+                document.getElementById('status-print').innerText = "Printer Connected";
+                document.getElementById('status-print').className = "text-[10px] text-green-400";
+                Swal.fire('Terhubung', 'Printer Siap!', 'success');
+            } catch (err) { Swal.fire('Gagal', 'Pastikan Bluetooth Nyala', 'error'); }
+        }
+
+        async function printStruk(o) {
+            if(!printerChar) return Swal.fire('Error', 'Connect Printer Dulu!', 'warning');
+            
+            // ESC/POS Commands
+            const ESC = '\u001B', GS = '\u001D', CT = '\u001Ba1', LT = '\u001Ba0', B = '\u001BE1', b = '\u001BE0';
+            let txt = ESC+'@'; // Init
+            txt += CT + B + "CAFE SENJA\n" + b + "Jl. Kopi No.1\n--------------------------------\n";
+            txt += LT + `Order: #${o.id}  Meja: ${o.no_meja}\nNama: ${o.nama_konsumen}\n--------------------------------\n`;
+            
+            o.detail_items.forEach(i => {
+                txt += `${i.nama}\n`; 
+                txt += `${i.qty} x ${i.harga} = ${(i.qty*i.harga)}\n`;
+            });
+            
+            txt += "--------------------------------\n";
+            txt += CT + B + `TOTAL: Rp ${o.total_bayar}\n` + b;
+            txt += `Bayar: ${o.metode_bayar.toUpperCase()}\n--------------------------------\n\n\n`;
+
+            try { await printerChar.writeValue(new TextEncoder().encode(txt)); } 
+            catch(e) { Swal.fire('Print Error', 'Koneksi putus', 'error'); }
+        }
+
+        // --- APP LOGIC ---
+        let orders = [], curStatus = 'pending';
+        const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+
+        async function fetch() {
+            const { data } = await client.from('pesanan').select('*').order('created_at', {ascending: false});
+            orders = data || [];
+            render();
+        }
+
+        function filter(s) { curStatus = s; render(); }
+
+        function render() {
+            document.getElementById('cnt-pending').innerText = orders.filter(o=>o.status_bayar==='pending').length;
+            document.getElementById('cnt-lunas').innerText = orders.filter(o=>o.status_bayar!=='pending').length;
+
+            const grid = document.getElementById('grid');
+            const list = orders.filter(o => curStatus==='pending' ? o.status_bayar==='pending' : o.status_bayar!=='pending');
+
+            grid.innerHTML = list.map(o => `
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg">
+                    <div class="flex justify-between mb-3">
+                        <h3 class="font-bold truncate">${o.nama_konsumen}</h3>
+                        <span class="bg-gray-700 px-2 rounded text-xs py-1">Meja ${o.no_meja}</span>
+                    </div>
+                    <div class="bg-gray-900/50 p-2 rounded mb-3 text-sm text-gray-300 h-24 overflow-y-auto">
+                        ${o.detail_items.map(i=>`<div class="flex justify-between"><span>${i.qty}x ${i.nama}</span><span>${i.harga*i.qty}</span></div>`).join('')}
+                    </div>
+                    <div class="flex justify-between font-bold mb-3">
+                        <span class="text-xs uppercase text-gray-500">${o.metode_bayar}</span>
+                        <span class="text-orange-500">Rp ${o.total_bayar.toLocaleString()}</span>
+                    </div>
+                    ${curStatus==='pending' ? 
+                    `<div class="grid grid-cols-2 gap-2">
+                        ${o.bukti_url ? `<button onclick="cekBukti('${o.bukti_url}')" class="bg-blue-600 rounded p-2 text-xs font-bold">BUKTI</button>` : ''}
+                        <button onclick="lunas(${o.id})" class="bg-green-600 rounded p-2 text-xs font-bold col-span-${o.bukti_url?1:2}">TERIMA & PRINT</button>
+                    </div>` : 
+                    `<button onclick='printStruk(${JSON.stringify(o)})' class="w-full bg-gray-700 rounded p-2 text-xs font-bold">PRINT ULANG</button>`
+                    }
+                </div>
+            `).join('');
+        }
+
+        async function lunas(id) {
+            await client.from('pesanan').update({status_bayar: 'lunas'}).eq('id', id);
+            const { data } = await client.from('pesanan').select('*').eq('id', id).single();
+            printStruk(data); // Auto Print
+            fetch();
+        }
+
+        function cekBukti(url) { Swal.fire({imageUrl: url, background:'#1f2937'}); }
+
+        // Realtime
+        client.channel('any').on('postgres_changes', {event:'INSERT', schema:'public', table:'pesanan'}, () => {
+            audio.play(); fetch();
+            Swal.fire({toast:true, position:'top-end', icon:'success', title:'Pesanan Baru!', timer:3000, showConfirmButton:false});
+        }).subscribe();
+
+        fetch();
+    </script>
+</body>
+</html>

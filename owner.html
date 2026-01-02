@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto p-4">
+        <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm">
+            <h1 class="font-bold text-xl text-gray-800">Owner Dashboard</h1>
+            <div><p class="text-xs text-gray-400">Omzet Hari Ini</p><p id="omzet" class="font-black text-2xl text-green-600">Rp 0</p></div>
+        </div>
+
+        <div class="flex gap-4 mb-6">
+            <button onclick="view('stats')" class="bg-gray-800 text-white px-6 py-2 rounded-lg font-bold text-sm shadow">Statistik</button>
+            <button onclick="view('menu')" class="bg-white text-gray-600 border px-6 py-2 rounded-lg font-bold text-sm shadow">Menu Manager</button>
+        </div>
+
+        <div id="p-stats" class="space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm"><h3 class="font-bold mb-4">Grafik Penjualan</h3><div class="h-64"><canvas id="chart"></canvas></div></div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm overflow-x-auto">
+                <table class="w-full text-sm text-left"><tbody id="table-history"></tbody></table>
+            </div>
+        </div>
+
+        <div id="p-menu" class="hidden space-y-4">
+            <button onclick="addMenu()" class="w-full bg-orange-600 text-white py-3 rounded-xl font-bold">+ Tambah Menu Baru</button>
+            <div id="list-menu" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb';
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        if(localStorage.getItem('role') !== 'owner') {
+        window.location.href = 'login.html';
+    }
+
+    // --- INISIALISASI ---
+    async function init() {
+        // 1. Hitung Omzet Hari Ini
+        const today = new Date().toISOString().split('T')[0];
+        const { data: orders } = await client.from('pesanan')
+            .select('*')
+            .gte('created_at', today)
+            .eq('status_bayar', 'lunas');
+        
+        let total = 0, cash = 0, qr = 0;
+        if(orders) {
+            orders.forEach(o => { 
+                total += o.total_bayar; 
+                if(o.metode_bayar==='cash') cash+=o.total_bayar; else qr+=o.total_bayar; 
+            });
+            
+            // Render Tabel Riwayat
+            document.getElementById('table-history').innerHTML = orders.slice(0,10).map(o => `
+                <tr class="border-b hover:bg-gray-50 transition">
+                    <td class="p-3 text-gray-600">${o.nama_konsumen}</td>
+                    <td class="p-3 text-right font-bold text-gray-800">Rp ${o.total_bayar.toLocaleString()}</td>
+                </tr>
+            `).join('');
+            
+            // Render Grafik
+            new Chart(document.getElementById('chart'), {
+                type: 'doughnut', 
+                data: { labels: ['Cash', 'QRIS'], datasets: [{ data: [cash, qr], backgroundColor: ['#ea580c', '#3b82f6'] }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+        
+        document.getElementById('omzet').innerText = 'Rp ' + total.toLocaleString();
+
+        // 2. Muat Daftar Menu
+        fetchMenu();
+    }
+
+    // --- MANAJEMEN MENU ---
+    async function fetchMenu() {
+        const { data } = await client.from('menu').select('*').order('id');
+        
+        document.getElementById('list-menu').innerHTML = data.map(m => `
+            <div class="bg-white p-4 rounded-xl shadow-sm flex gap-4 items-center border border-gray-100 hover:shadow-md transition">
+                <img src="${m.gambar}" class="w-16 h-16 rounded-lg bg-gray-200 object-cover">
+                <div class="flex-1">
+                    <h4 class="font-bold text-gray-800">${m.nama}</h4>
+                    <p class="text-orange-600 font-bold">Rp ${m.harga.toLocaleString()}</p>
+                    <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500 capitalize">${m.kategori}</span>
+                </div>
+                <button onclick="delMenu(${m.id}, '${m.nama}')" class="bg-red-50 text-red-500 hover:bg-red-600 hover:text-white p-3 rounded-lg transition shadow-sm" title="Hapus Menu">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    // --- FUNGSI TAMBAH MENU ---
+    async function addMenu() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Tambah Menu Baru',
+            html:
+                '<input id="swal-nama" class="swal2-input" placeholder="Nama Menu">' +
+                '<input id="swal-harga" type="number" class="swal2-input" placeholder="Harga">' +
+                '<select id="swal-kat" class="swal2-input"><option value="minuman">Minuman</option><option value="makanan">Makanan</option><option value="snack">Snack</option></select>' +
+                '<input id="swal-img" class="swal2-input" placeholder="Link Gambar (URL)">',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Simpan',
+            preConfirm: () => {
+                return [
+                    document.getElementById('swal-nama').value,
+                    document.getElementById('swal-harga').value,
+                    document.getElementById('swal-kat').value,
+                    document.getElementById('swal-img').value
+                ]
+            }
+        });
+
+        if (formValues) {
+            const [nama, harga, kat, img] = formValues;
+            if(!nama || !harga) return Swal.fire('Gagal', 'Nama dan Harga wajib diisi', 'error');
+
+            const { error } = await client.from('menu').insert([{
+                nama: nama, 
+                harga: parseInt(harga), 
+                kategori: kat, 
+                gambar: img || 'https://via.placeholder.com/150'
+            }]);
+
+            if(!error) {
+                Swal.fire('Berhasil', 'Menu ditambahkan', 'success');
+                fetchMenu();
+            }
+        }
+    }
+
+    // --- FUNGSI HAPUS MENU (YANG ANDA TANYAKAN) ---
+    async function delMenu(id, namaMenu) {
+        // Tanya dulu pakai SweetAlert biar keren & aman
+        const result = await Swal.fire({
+            title: 'Hapus Menu?',
+            text: `Yakin ingin menghapus "${namaMenu}" selamanya?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33', // Warna Merah
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        });
+
+        if (result.isConfirmed) {
+            // Proses Hapus di Database
+            const { error } = await client.from('menu').delete().eq('id', id);
+            
+            if(!error) {
+                Swal.fire('Terhapus!', 'Menu berhasil dihapus.', 'success');
+                fetchMenu(); // Refresh tampilan otomatis
+            } else {
+                Swal.fire('Gagal', 'Ada masalah koneksi.', 'error');
+            }
+        }
+    }
+
+    // --- GANTI TAB (STATS / MENU) ---
+    function view(tab) {
+        document.getElementById('p-stats').classList.toggle('hidden', tab!=='stats');
+        document.getElementById('p-menu').classList.toggle('hidden', tab!=='menu');
+    }
+
+    // Jalankan awal
+    init();
+</script>
