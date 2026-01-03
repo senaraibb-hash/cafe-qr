@@ -83,7 +83,7 @@
 
         // --- APP LOGIC ---
         let orders = [], curStatus = 'pending';
-        const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+        const audio = new Audio('notif.wav');
 
         async function fetch() {
             const { data } = await client.from('pesanan').select('*').order('created_at', {ascending: false});
@@ -142,4 +142,5 @@
         fetch();
     </script>
 </body>
+
 </html>
