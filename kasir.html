@@ -134,8 +134,14 @@
         function cekBukti(url) { Swal.fire({imageUrl: url, background:'#1f2937'}); }
 
         // Realtime
-        client.channel('any').on('postgres_changes', {event:'INSERT', schema:'public', table:'pesanan'}, () => {
-            audio.play(); fetch();
+        client.channel('any')// Kode BARU (Anti Macet)
+.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pesanan' }, payload => {
+    // Coba bunyikan suara, kalau gagal (diblokir browser), CUEKIN SAJA dan lanjut kerja!
+    audio.play().catch(e => console.log("Suara ditahan browser, tapi pesanan tetap masuk."));
+    
+    // Tampilkan pesanan (Wajib jalan)
+    fetch();
+})
             Swal.fire({toast:true, position:'top-end', icon:'success', title:'Pesanan Baru!', timer:3000, showConfirmButton:false});
         }).subscribe();
 
@@ -144,3 +150,4 @@
 </body>
 
 </html>
+
