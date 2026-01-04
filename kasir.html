@@ -3,151 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kasir Pro</title>
+    <title>KASIR CAFE - MONITOR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
+    <style>
+        @keyframes kedip { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .animasi-baru { animation: kedip 1s infinite; border: 2px solid yellow; }
+    </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <nav class="bg-gray-800 p-4 sticky top-0 z-50 shadow-lg flex justify-between items-center border-b border-gray-700">
-        <div>
-            <h1 class="font-bold text-lg">KASIR<span class="text-orange-500">PRO</span></h1>
-            <p id="status-print" class="text-[10px] text-red-400">Printer Off</p>
-        </div>
-        <button onclick="connectPrinter()" class="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold shadow-lg flex gap-2 items-center hover:bg-blue-500">
-            <i class="fas fa-print"></i> HUBUNGKAN PRINTER
-        </button>
+<body class="bg-gray-900 text-white min-h-screen font-mono">
+
+    <div id="overlay-start" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center cursor-pointer" onclick="mulaiAplikasi()">
+        <div class="text-6xl mb-4">🔇 ➡️ 🔊</div>
+        <h1 class="text-2xl font-bold text-green-400 animate-pulse">KLIK LAYAR UNTUK MULAI KASIR</h1>
+        <p class="text-gray-400 mt-2">Wajib diklik agar notifikasi suara aktif</p>
+    </div>
+
+    <nav class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center sticky top-0 z-40">
+        <h1 class="text-xl font-bold text-orange-500">🔥 CAFE MONITOR</h1>
+        <div id="status-koneksi" class="text-xs text-gray-500">Menghubungkan...</div>
     </nav>
 
     <div class="p-4 max-w-6xl mx-auto">
-        <div class="flex gap-2 mb-4">
-            <button onclick="filter('pending')" class="flex-1 bg-gray-700 border-l-4 border-yellow-500 p-3 rounded-lg text-left hover:bg-gray-600">
-                <span class="block text-xs text-gray-400">Menunggu</span>
-                <span id="cnt-pending" class="text-xl font-bold text-yellow-500">0</span>
-            </button>
-            <button onclick="filter('lunas')" class="flex-1 bg-gray-700 border-l-4 border-green-500 p-3 rounded-lg text-left hover:bg-gray-600">
-                <span class="block text-xs text-gray-400">Selesai</span>
-                <span id="cnt-lunas" class="text-xl font-bold text-green-500">0</span>
-            </button>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div onclick="gantiFilter('pending')" class="bg-gray-800 p-4 rounded-lg border-l-4 border-yellow-500 cursor-pointer hover:bg-gray-700">
+                <h3 class="text-gray-400 text-sm">PESANAN BARU</h3>
+                <p id="count-pending" class="text-4xl font-bold text-yellow-400">0</p>
+            </div>
+            <div onclick="gantiFilter('lunas')" class="bg-gray-800 p-4 rounded-lg border-l-4 border-green-500 cursor-pointer hover:bg-gray-700">
+                <h3 class="text-gray-400 text-sm">SELESAI / LUNAS</h3>
+                <p id="count-lunas" class="text-4xl font-bold text-green-400">0</p>
+            </div>
         </div>
 
-        <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <h2 id="judul-list" class="text-lg font-bold mb-4 border-b border-gray-700 pb-2">DAFTAR ANTRIAN</h2>
+        <div id="grid-pesanan" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <p class="text-gray-500 col-span-full text-center py-10">Belum ada data...</p>
+        </div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co';
+        // --- KONFIGURASI (WAJIB DIISI) ---
+        // Ganti titik-titik di bawah dengan kode Supabase Anda yang asli!
+        const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb';
-        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        // Cek Login
-        if(localStorage.getItem('role') !== 'kasir' && localStorage.getItem('role') !== 'owner') window.location.href = 'login.html';
+        // Inisialisasi
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let audioNotif = new Audio('notif.wav'); // Pastikan file notif.wav ada di GitHub
+        let dataPesanan = [];
+        let filterStatus = 'pending';
 
-        // --- BLUETOOTH PRINTER LOGIC (ESC/POS) ---
-        let printerChar = null;
-        async function connectPrinter() {
-            try {
-                const device = await navigator.bluetooth.requestDevice({ filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }] });
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-                printerChar = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
-                document.getElementById('status-print').innerText = "Printer Connected";
-                document.getElementById('status-print').className = "text-[10px] text-green-400";
-                Swal.fire('Terhubung', 'Printer Siap!', 'success');
-            } catch (err) { Swal.fire('Gagal', 'Pastikan Bluetooth Nyala', 'error'); }
+        // --- FUNGSI UTAMA ---
+
+        // 1. Tombol Mulai (Agar browser mengizinkan suara)
+        function mulaiAplikasi() {
+            document.getElementById('overlay-start').style.display = 'none';
+            audioNotif.play().then(() => {
+                audioNotif.pause();
+                audioNotif.currentTime = 0;
+            }).catch(e => console.log("Audio siap."));
+            ambilData();
         }
 
-        async function printStruk(o) {
-            if(!printerChar) return Swal.fire('Error', 'Connect Printer Dulu!', 'warning');
-            
-            // ESC/POS Commands
-            const ESC = '\u001B', GS = '\u001D', CT = '\u001Ba1', LT = '\u001Ba0', B = '\u001BE1', b = '\u001BE0';
-            let txt = ESC+'@'; // Init
-            txt += CT + B + "CAFE SENJA\n" + b + "Jl. Kopi No.1\n--------------------------------\n";
-            txt += LT + `Order: #${o.id}  Meja: ${o.no_meja}\nNama: ${o.nama_konsumen}\n--------------------------------\n`;
-            
-            o.detail_items.forEach(i => {
-                txt += `${i.nama}\n`; 
-                txt += `${i.qty} x ${i.harga} = ${(i.qty*i.harga)}\n`;
-            });
-            
-            txt += "--------------------------------\n";
-            txt += CT + B + `TOTAL: Rp ${o.total_bayar}\n` + b;
-            txt += `Bayar: ${o.metode_bayar.toUpperCase()}\n--------------------------------\n\n\n`;
+        // 2. Ambil Data dari Database
+        async function ambilData() {
+            document.getElementById('status-koneksi').innerText = "Memuat data...";
+            const { data, error } = await client
+                .from('pesanan')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-            try { await printerChar.writeValue(new TextEncoder().encode(txt)); } 
-            catch(e) { Swal.fire('Print Error', 'Koneksi putus', 'error'); }
+            if (error) {
+                console.error("Error:", error);
+                document.getElementById('status-koneksi').innerText = "Error mengambil data!";
+            } else {
+                dataPesanan = data || [];
+                renderLayar();
+                document.getElementById('status-koneksi').innerText = "🟢 Terhubung Realtime";
+            }
         }
 
-        // --- APP LOGIC ---
-        let orders = [], curStatus = 'pending';
-        const audio = new Audio('notif.wav');
+        // 3. Tampilkan ke Layar (Render)
+        function renderLayar() {
+            // Hitung Angka
+            const pending = dataPesanan.filter(x => x.status_bayar === 'pending');
+            const lunas = dataPesanan.filter(x => x.status_bayar !== 'pending');
+            
+            document.getElementById('count-pending').innerText = pending.length;
+            document.getElementById('count-lunas').innerText = lunas.length;
 
-        async function fetch() {
-            const { data } = await client.from('pesanan').select('*').order('created_at', {ascending: false});
-            orders = data || [];
-            render();
-        }
+            // Filter Tampilan
+            const listTampil = filterStatus === 'pending' ? pending : lunas;
+            const container = document.getElementById('grid-pesanan');
 
-        function filter(s) { curStatus = s; render(); }
+            if (listTampil.length === 0) {
+                container.innerHTML = `<p class="text-gray-500 col-span-full text-center py-10">Tidak ada pesanan ${filterStatus}.</p>`;
+                return;
+            }
 
-        function render() {
-            document.getElementById('cnt-pending').innerText = orders.filter(o=>o.status_bayar==='pending').length;
-            document.getElementById('cnt-lunas').innerText = orders.filter(o=>o.status_bayar!=='pending').length;
-
-            const grid = document.getElementById('grid');
-            const list = orders.filter(o => curStatus==='pending' ? o.status_bayar==='pending' : o.status_bayar!=='pending');
-
-            grid.innerHTML = list.map(o => `
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg">
-                    <div class="flex justify-between mb-3">
-                        <h3 class="font-bold truncate">${o.nama_konsumen}</h3>
-                        <span class="bg-gray-700 px-2 rounded text-xs py-1">Meja ${o.no_meja}</span>
+            // Buat Kartu HTML
+            container.innerHTML = listTampil.map(o => `
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg border-t-4 ${o.status_bayar==='pending' ? 'border-yellow-500' : 'border-green-500'} fade-in">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-xl font-bold text-white">Meja ${o.nomor_meja}</h3>
+                        <span class="text-xs bg-gray-700 px-2 py-1 rounded">${new Date(o.created_at).toLocaleTimeString()}</span>
                     </div>
-                    <div class="bg-gray-900/50 p-2 rounded mb-3 text-sm text-gray-300 h-24 overflow-y-auto">
-                        ${o.detail_items.map(i=>`<div class="flex justify-between"><span>${i.qty}x ${i.nama}</span><span>${i.harga*i.qty}</span></div>`).join('')}
+                    
+                    <div class="bg-gray-900 p-3 rounded mb-3 text-sm text-gray-300 whitespace-pre-line border border-gray-700">
+                        ${o.items}
                     </div>
-                    <div class="flex justify-between font-bold mb-3">
-                        <span class="text-xs uppercase text-gray-500">${o.metode_bayar}</span>
-                        <span class="text-orange-500">Rp ${o.total_bayar.toLocaleString()}</span>
+
+                    <div class="flex justify-between items-center mt-2">
+                        <div class="text-lg font-bold text-orange-400">Rp ${parseInt(o.total_bayar).toLocaleString()}</div>
+                        
+                        ${o.status_bayar === 'pending' ? 
+                        `<button onclick="bayar(${o.id})" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold shadow transition">✅ BAYAR</button>` 
+                        : 
+                        `<span class="text-green-500 font-bold">LUNAS</span>`
+                        }
                     </div>
-                    ${curStatus==='pending' ? 
-                    `<div class="grid grid-cols-2 gap-2">
-                        ${o.bukti_url ? `<button onclick="cekBukti('${o.bukti_url}')" class="bg-blue-600 rounded p-2 text-xs font-bold">BUKTI</button>` : ''}
-                        <button onclick="lunas(${o.id})" class="bg-green-600 rounded p-2 text-xs font-bold col-span-${o.bukti_url?1:2}">TERIMA & PRINT</button>
-                    </div>` : 
-                    `<button onclick='printStruk(${JSON.stringify(o)})' class="w-full bg-gray-700 rounded p-2 text-xs font-bold">PRINT ULANG</button>`
-                    }
                 </div>
             `).join('');
         }
 
-        async function lunas(id) {
-            await client.from('pesanan').update({status_bayar: 'lunas'}).eq('id', id);
-            const { data } = await client.from('pesanan').select('*').eq('id', id).single();
-            printStruk(data); // Auto Print
-            fetch();
+        // 4. Update Status Bayar
+        async function bayar(id) {
+            Swal.fire({
+                title: 'Konfirmasi Bayar?',
+                text: "Pastikan uang sudah diterima.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Lunas!'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await client.from('pesanan').update({ status_bayar: 'lunas' }).eq('id', id);
+                    Swal.fire('Berhasil!', 'Status pesanan diperbarui.', 'success');
+                    // Data akan update otomatis via Realtime
+                }
+            });
         }
 
-        function cekBukti(url) { Swal.fire({imageUrl: url, background:'#1f2937'}); }
+        function gantiFilter(status) {
+            filterStatus = status;
+            document.getElementById('judul-list').innerText = status === 'pending' ? "DAFTAR ANTRIAN (BELUM BAYAR)" : "RIWAYAT SELESAI";
+            renderLayar();
+        }
 
-        // Realtime
-        client.channel('any')// Kode BARU (Anti Macet)
-.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pesanan' }, payload => {
-    // Coba bunyikan suara, kalau gagal (diblokir browser), CUEKIN SAJA dan lanjut kerja!
-    audio.play().catch(e => console.log("Suara ditahan browser, tapi pesanan tetap masuk."));
-    
-    // Tampilkan pesanan (Wajib jalan)
-    fetch();
-})
-            Swal.fire({toast:true, position:'top-end', icon:'success', title:'Pesanan Baru!', timer:3000, showConfirmButton:false});
-        }).subscribe();
+        // --- SISTEM REALTIME (Jantung Aplikasi) ---
+        const channel = client.channel('public:pesanan')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'pesanan' }, (payload) => {
+                console.log("Ada update!", payload);
+                
+                // Jika pesanan baru masuk
+                if (payload.eventType === 'INSERT') {
+                    // Mainkan Suara
+                    audioNotif.play().catch(e => console.log("Suara gagal, pastikan sudah klik layar awal."));
+                    
+                    // Notifikasi Layar
+                    Swal.fire({
+                        title: 'PESANAN BARU!',
+                        text: `Meja ${payload.new.nomor_meja} baru saja memesan.`,
+                        icon: 'info',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                }
+                
+                // Refresh Data
+                ambilData();
+            })
+            .subscribe();
 
-        fetch();
     </script>
 </body>
-
 </html>
-
