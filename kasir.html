@@ -30,11 +30,11 @@
 
     <div class="p-6 max-w-7xl mx-auto">
         <div class="grid grid-cols-2 gap-6 mb-8">
-            <div onclick="gantiFilter('pending')" class="bg-gray-800 p-6 rounded-xl border-l-8 border-yellow-500 cursor-pointer hover:bg-gray-750 transition shadow-lg relative overflow-hidden">
+            <div onclick="gantiFilter('pending')" class="bg-gray-800 p-6 rounded-xl border-l-8 border-yellow-500 cursor-pointer hover:bg-gray-750 transition shadow-lg">
                 <h3 class="text-gray-400 font-bold uppercase text-sm tracking-widest">Antrian Baru</h3>
                 <p id="count-pending" class="text-5xl font-bold text-white mt-2">0</p>
             </div>
-            <div onclick="gantiFilter('lunas')" class="bg-gray-800 p-6 rounded-xl border-l-8 border-green-500 cursor-pointer hover:bg-gray-750 transition shadow-lg relative overflow-hidden">
+            <div onclick="gantiFilter('lunas')" class="bg-gray-800 p-6 rounded-xl border-l-8 border-green-500 cursor-pointer hover:bg-gray-750 transition shadow-lg">
                 <h3 class="text-gray-400 font-bold uppercase text-sm tracking-widest">Selesai / Lunas</h3>
                 <p id="count-lunas" class="text-5xl font-bold text-white mt-2">0</p>
             </div>
@@ -50,11 +50,10 @@
     </div>
 
     <script>
-        // --- KONFIGURASI (ISI DATA ANDA DISINI) ---
+        // --- KONFIGURASI SUPABASE ---
         const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co'; 
-        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; // <--- JANGAN LUPA ISI KEY INI!
+        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; // <--- JANGAN LUPA KEY ANDA!
         
-        // Inisialisasi
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let audioNotif = new Audio('notif.wav'); 
         let dataPesanan = [];
@@ -73,14 +72,14 @@
 
         async function ambilData() {
             document.getElementById('status-koneksi').innerText = "🔄 Sync...";
+            // Kita ambil juga kolom 'metode_bayar' dan 'bukti_url'
             const { data, error } = await client
                 .from('pesanan')
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error("Error DB:", error);
-            } else {
+            if (error) console.error("Error DB:", error);
+            else {
                 dataPesanan = data || [];
                 renderLayar();
                 document.getElementById('status-koneksi').innerText = "🟢 Online";
@@ -102,8 +101,14 @@
                 return;
             }
 
-            // RENDER KARTU (Updated: no_meja, nama_konsumen, catatan)
-            container.innerHTML = listTampil.map(o => `
+            // RENDER KARTU
+            container.innerHTML = listTampil.map(o => {
+                // Tentukan Label Metode Bayar
+                let labelMetode = o.metode_bayar === 'qr' 
+                    ? `<span class="bg-blue-600 text-white text-xs px-2 py-1 rounded font-bold">QRIS</span>`
+                    : `<span class="bg-orange-600 text-white text-xs px-2 py-1 rounded font-bold">TUNAI</span>`;
+
+                return `
                 <div class="bg-gray-800 rounded-xl overflow-hidden shadow-xl border border-gray-700 flex flex-col ${o.status_bayar==='pending' ? 'pesanan-baru' : ''}">
                     
                     <div class="p-4 ${o.status_bayar==='pending' ? 'bg-yellow-900/30' : 'bg-green-900/30'} flex justify-between items-start">
@@ -111,9 +116,10 @@
                             <h3 class="text-2xl font-bold text-white">Meja ${o.no_meja}</h3>
                             <p class="text-orange-300 font-bold text-sm mt-1">👤 ${o.nama_konsumen || 'Tanpa Nama'}</p>
                         </div>
-                        <span class="text-xs bg-black/30 px-2 py-1 rounded text-gray-400">
-                            ${new Date(o.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </span>
+                        <div class="text-right flex flex-col items-end gap-1">
+                            <span class="text-xs text-gray-400">${new Date(o.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            ${labelMetode}
+                        </div>
                     </div>
                     
                     <div class="p-4 flex-grow border-t border-b border-gray-700/50 bg-gray-800/50">
@@ -127,48 +133,73 @@
                         </div>
                         
                         ${o.status_bayar === 'pending' ? 
-                        // TOMBOL BAYAR BARU (Kirim Total Harga)
-                        `<button onclick="prosesBayar(${o.id}, '${o.nama_konsumen}', ${o.total_bayar})" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition">
-                            BAYAR ✅
+                        // TOMBOL CEK / BAYAR (Kirim semua data penting)
+                        `<button onclick="cekPembayaran(${o.id}, '${o.nama_konsumen}', ${o.total_bayar}, '${o.metode_bayar}', '${o.bukti_url}')" 
+                           class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition">
+                            ${o.metode_bayar === 'qr' ? 'CEK BUKTI 📷' : 'TERIMA UANG 💵'}
                         </button>` 
                         : 
                         `<span class="text-green-500 font-bold border border-green-500/30 px-3 py-1 rounded bg-green-900/20">LUNAS</span>`
                         }
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
-        // --- FUNGSI BAYAR PAKAI QR ---
-        async function prosesBayar(id, nama, total) {
+        // --- LOGIKA CEK PEMBAYARAN PINTAR ---
+        async function cekPembayaran(id, nama, total, metode, buktiUrl) {
             let rupiah = parseInt(total).toLocaleString('id-ID');
 
-            // POPUP QR CODE (Memanggil file qr.png)
-            const result = await Swal.fire({
-                title: 'SCAN PEMBAYARAN',
-                text: `Total: Rp ${rupiah} (a.n ${nama})`,
-                imageUrl: 'qr.png',          // <--- INI FILE QR ANDA
-                imageWidth: 250,
-                imageAlt: 'QR Code',
-                showCancelButton: true,
-                confirmButtonText: 'Sudah Dibayar (Lunas)',
-                cancelButtonText: 'Batal',
-                confirmButtonColor: '#10B981',
-                cancelButtonColor: '#d33',
-                background: '#1f2937',
-                color: '#fff'
-            });
+            if (metode === 'qr') {
+                // JIKA QR: Tampilkan Foto Bukti dari Konsumen
+                if(!buktiUrl || buktiUrl === 'null' || buktiUrl === 'undefined') {
+                    Swal.fire('Info', 'Pelanggan memilih QR tapi belum upload bukti.', 'info');
+                    return;
+                }
 
-            if (result.isConfirmed) {
-                await client.from('pesanan').update({ status_bayar: 'lunas' }).eq('id', id);
-                Swal.fire({
-                    title: 'Lunas!',
-                    icon: 'success',
-                    timer: 1500,
-                    showConfirmButton: false,
+                const result = await Swal.fire({
+                    title: 'VERIFIKASI BUKTI TF',
+                    text: `Total: Rp ${rupiah} (a.n ${nama})`,
+                    imageUrl: buktiUrl,     // <--- INI FOTO DARI DATABASE/PELANGGAN
+                    imageAlt: 'Bukti Transfer',
+                    imageHeight: 400,
+                    showCancelButton: true,
+                    confirmButtonText: '✅ Valid (Lunas)',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#10B981',
+                    cancelButtonColor: '#d33',
                     background: '#1f2937', color: '#fff'
                 });
+
+                if (result.isConfirmed) updateLunas(id);
+
+            } else {
+                // JIKA TUNAI: Tampilkan Konfirmasi Biasa
+                const result = await Swal.fire({
+                    title: 'TERIMA TUNAI?',
+                    text: `Pastikan uang Rp ${rupiah} sudah diterima dari ${nama}.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Uang Diterima',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#10B981',
+                    cancelButtonColor: '#d33',
+                    background: '#1f2937', color: '#fff'
+                });
+
+                if (result.isConfirmed) updateLunas(id);
             }
+        }
+
+        async function updateLunas(id) {
+            await client.from('pesanan').update({ status_bayar: 'lunas' }).eq('id', id);
+            Swal.fire({
+                title: 'Lunas!',
+                icon: 'success',
+                timer: 1000,
+                showConfirmButton: false,
+                background: '#1f2937', color: '#fff'
+            });
         }
 
         function gantiFilter(status) {
@@ -184,7 +215,7 @@
                     audioNotif.play().catch(e => {});
                     Swal.fire({
                         title: 'PESANAN MASUK!',
-                        html: `<h2 class="text-3xl font-bold text-orange-500">Meja ${payload.new.no_meja}</h2>`, // Pake no_meja
+                        html: `<h2 class="text-3xl font-bold text-orange-500">Meja ${payload.new.no_meja}</h2>`,
                         icon: 'success',
                         timer: 3000,
                         showConfirmButton: false,
