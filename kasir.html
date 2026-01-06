@@ -17,7 +17,7 @@
     <div id="overlay-start" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center cursor-pointer" onclick="mulaiAplikasi()">
         <div class="text-6xl mb-4 animate-bounce">👆</div>
         <h1 class="text-3xl font-bold text-green-400">KLIK LAYAR UNTUK MULAI</h1>
-        <p class="text-gray-400 mt-2">Klik sekali agar suara notifikasi aktif</p>
+        <p class="text-gray-400 mt-2">Wajib klik agar suara notifikasi aktif</p>
     </div>
 
     <nav class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center sticky top-0 z-40 shadow-lg">
@@ -31,22 +31,17 @@
     <div class="p-6 max-w-7xl mx-auto">
         <div class="grid grid-cols-2 gap-6 mb-8">
             <div onclick="gantiFilter('pending')" class="bg-gray-800 p-6 rounded-xl border-l-8 border-yellow-500 cursor-pointer hover:bg-gray-750 transition shadow-lg relative overflow-hidden">
-                <div class="absolute right-0 top-0 opacity-10 text-9xl font-bold text-yellow-500 -mr-4 -mt-4">?</div>
                 <h3 class="text-gray-400 font-bold uppercase text-sm tracking-widest">Antrian Baru</h3>
                 <p id="count-pending" class="text-5xl font-bold text-white mt-2">0</p>
-                <p class="text-yellow-500 text-xs mt-2 font-bold">KLIK UNTUK LIHAT</p>
             </div>
             <div onclick="gantiFilter('lunas')" class="bg-gray-800 p-6 rounded-xl border-l-8 border-green-500 cursor-pointer hover:bg-gray-750 transition shadow-lg relative overflow-hidden">
-                <div class="absolute right-0 top-0 opacity-10 text-9xl font-bold text-green-500 -mr-4 -mt-4">$</div>
                 <h3 class="text-gray-400 font-bold uppercase text-sm tracking-widest">Selesai / Lunas</h3>
                 <p id="count-lunas" class="text-5xl font-bold text-white mt-2">0</p>
-                <p class="text-green-500 text-xs mt-2 font-bold">KLIK UNTUK LIHAT</p>
             </div>
         </div>
 
         <div class="flex justify-between items-end mb-4 border-b border-gray-700 pb-2">
             <h2 id="judul-list" class="text-2xl font-bold text-yellow-400">DAFTAR ANTRIAN</h2>
-            <span class="text-xs text-gray-500">Realtime Update</span>
         </div>
 
         <div id="grid-pesanan" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -55,40 +50,36 @@
     </div>
 
     <script>
-        // --- KONFIGURASI PENTING ---
-        // Masukkan URL & Key Supabase Anda di sini!
+        // --- KONFIGURASI (ISI DATA ANDA DISINI) ---
         const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co'; 
-        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; // <-- JANGAN LUPA ISI INI!
+        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; // <--- JANGAN LUPA ISI KEY INI!
         
         // Inisialisasi
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let audioNotif = new Audio('notif.wav'); 
         let dataPesanan = [];
-        let filterStatus = 'pending'; // Default: Tampilkan yang belum bayar
+        let filterStatus = 'pending'; 
 
-        // --- FUNGSI SYSTEM ---
+        // --- SYSTEM ---
 
         function mulaiAplikasi() {
             document.getElementById('overlay-start').style.display = 'none';
-            // Pancing browser biar izinkan suara
             audioNotif.play().then(() => {
                 audioNotif.pause();
                 audioNotif.currentTime = 0;
-            }).catch(e => console.log("Audio siap triggered."));
+            }).catch(e => console.log("Audio siap."));
             ambilData();
         }
 
         async function ambilData() {
             document.getElementById('status-koneksi').innerText = "🔄 Sync...";
-            // Ambil data dari tabel 'pesanan'
             const { data, error } = await client
                 .from('pesanan')
                 .select('*')
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error("Error Database:", error);
-                Swal.fire('Error', 'Gagal ambil data database', 'error');
+                console.error("Error DB:", error);
             } else {
                 dataPesanan = data || [];
                 renderLayar();
@@ -97,40 +88,30 @@
         }
 
         function renderLayar() {
-            // 1. Hitung Statistik
             const pending = dataPesanan.filter(x => x.status_bayar === 'pending');
             const lunas = dataPesanan.filter(x => x.status_bayar !== 'pending');
             
             document.getElementById('count-pending').innerText = pending.length;
             document.getElementById('count-lunas').innerText = lunas.length;
 
-            // 2. Filter Data yang mau ditampilkan
             const listTampil = filterStatus === 'pending' ? pending : lunas;
             const container = document.getElementById('grid-pesanan');
 
-            // 3. Jika Kosong
             if (listTampil.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-10 bg-gray-800 rounded-lg border border-gray-700 text-gray-400">
-                    Tidak ada pesanan ${filterStatus === 'pending' ? 'baru' : 'selesai'}.
-                </div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">Tidak ada pesanan.</div>`;
                 return;
             }
 
-            // 4. Render Kartu HTML
-            // PERHATIKAN: Di sini kita pakai 'no_meja' dan 'nama_konsumen'
+            // RENDER KARTU (Updated: no_meja, nama_konsumen, catatan)
             container.innerHTML = listTampil.map(o => `
                 <div class="bg-gray-800 rounded-xl overflow-hidden shadow-xl border border-gray-700 flex flex-col ${o.status_bayar==='pending' ? 'pesanan-baru' : ''}">
                     
                     <div class="p-4 ${o.status_bayar==='pending' ? 'bg-yellow-900/30' : 'bg-green-900/30'} flex justify-between items-start">
                         <div>
-                            <h3 class="text-2xl font-bold text-white">
-                                Meja ${o.no_meja}
-                            </h3>
-                            <p class="text-orange-300 font-bold text-sm mt-1">
-                                👤 ${o.nama_konsumen || 'Tanpa Nama'}
-                            </p>
+                            <h3 class="text-2xl font-bold text-white">Meja ${o.no_meja}</h3>
+                            <p class="text-orange-300 font-bold text-sm mt-1">👤 ${o.nama_konsumen || 'Tanpa Nama'}</p>
                         </div>
-                        <span class="text-xs font-mono bg-black/30 px-2 py-1 rounded text-gray-400">
+                        <span class="text-xs bg-black/30 px-2 py-1 rounded text-gray-400">
                             ${new Date(o.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </span>
                     </div>
@@ -141,12 +122,13 @@
 
                     <div class="p-4 bg-gray-900 flex justify-between items-center">
                         <div>
-                            <p class="text-xs text-gray-500">Total Bayar</p>
+                            <p class="text-xs text-gray-500">Total</p>
                             <p class="text-xl font-bold text-white">Rp ${parseInt(o.total_bayar).toLocaleString()}</p>
                         </div>
                         
                         ${o.status_bayar === 'pending' ? 
-                        `<button onclick="prosesBayar(${o.id}, '${o.nama_konsumen}')" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition">
+                        // TOMBOL BAYAR BARU (Kirim Total Harga)
+                        `<button onclick="prosesBayar(${o.id}, '${o.nama_konsumen}', ${o.total_bayar})" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition">
                             BAYAR ✅
                         </button>` 
                         : 
@@ -157,75 +139,62 @@
             `).join('');
         }
 
-        // --- SISTEM REALTIME (Auto Update) ---
-        client.channel('public:pesanan')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'pesanan' }, (payload) => {
-                console.log("Update Masuk:", payload);
-                
-                // Jika ada pesanan BARU (INSERT)
-                if (payload.eventType === 'INSERT') {
-                    // Bunyikan Suara
-                    audioNotif.play().catch(e => console.log("Suara perlu izin klik user."));
-                    
-                    // Munculkan Notif Popup
-                    const meja = payload.new.no_meja;
-                    const nama = payload.new.nama_konsumen;
-                    
-                    Swal.fire({
-                        title: 'PESANAN MASUK!',
-                        html: `<h2 class="text-3xl font-bold text-orange-500">Meja ${meja}</h2><p class="text-xl">${nama}</p>`,
-                        icon: 'success',
-                        timer: 4000,
-                        showConfirmButton: false,
-                        background: '#1f2937',
-                        color: '#fff'
-                    });
-                }
-                
-                // Refresh data otomatis
-                ambilData();
-            })
-            .subscribe();
+        // --- FUNGSI BAYAR PAKAI QR ---
+        async function prosesBayar(id, nama, total) {
+            let rupiah = parseInt(total).toLocaleString('id-ID');
 
-        // --- INTERAKSI TOMBOL ---
-        
-        async function prosesBayar(id, nama) {
+            // POPUP QR CODE (Memanggil file qr.png)
             const result = await Swal.fire({
-                title: 'Konfirmasi Pembayaran',
-                text: `Terima pembayaran dari ${nama || 'Pelanggan'}?`,
-                icon: 'question',
+                title: 'SCAN PEMBAYARAN',
+                text: `Total: Rp ${rupiah} (a.n ${nama})`,
+                imageUrl: 'qr.png',          // <--- INI FILE QR ANDA
+                imageWidth: 250,
+                imageAlt: 'QR Code',
                 showCancelButton: true,
+                confirmButtonText: 'Sudah Dibayar (Lunas)',
+                cancelButtonText: 'Batal',
                 confirmButtonColor: '#10B981',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Lunas!',
                 background: '#1f2937',
                 color: '#fff'
             });
 
             if (result.isConfirmed) {
-                // Update ke Database
                 await client.from('pesanan').update({ status_bayar: 'lunas' }).eq('id', id);
-                
                 Swal.fire({
-                    title: 'Berhasil!',
-                    text: 'Status berubah jadi LUNAS.',
+                    title: 'Lunas!',
                     icon: 'success',
                     timer: 1500,
                     showConfirmButton: false,
-                    background: '#1f2937',
-                    color: '#fff'
+                    background: '#1f2937', color: '#fff'
                 });
             }
         }
 
         function gantiFilter(status) {
             filterStatus = status;
-            document.getElementById('judul-list').innerText = status === 'pending' ? "DAFTAR ANTRIAN (BELUM BAYAR)" : "RIWAYAT SELESAI";
-            document.getElementById('judul-list').className = status === 'pending' ? "text-2xl font-bold text-yellow-400" : "text-2xl font-bold text-green-400";
+            document.getElementById('judul-list').innerText = status === 'pending' ? "DAFTAR ANTRIAN" : "RIWAYAT SELESAI";
             renderLayar();
         }
+
+        // --- REALTIME ---
+        client.channel('public:pesanan')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'pesanan' }, (payload) => {
+                if (payload.eventType === 'INSERT') {
+                    audioNotif.play().catch(e => {});
+                    Swal.fire({
+                        title: 'PESANAN MASUK!',
+                        html: `<h2 class="text-3xl font-bold text-orange-500">Meja ${payload.new.no_meja}</h2>`, // Pake no_meja
+                        icon: 'success',
+                        timer: 3000,
+                        showConfirmButton: false,
+                        background: '#1f2937', color: '#fff'
+                    });
+                }
+                ambilData();
+            })
+            .subscribe();
 
     </script>
 </body>
 </html>
-
