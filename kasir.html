@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASIR CAFE - MONITOR PRO</title>
+    <title>KASIR CAFE - BLUETOOTH</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        @keyframes kedip { 0% { border-color: red; } 50% { border-color: yellow; } 100% { border-color: red; } }
+        @keyframes kedip { 0% { border-color: red; 50% { border-color: yellow; } 100% { border-color: red; } } }
         .pesanan-baru { animation: kedip 1s infinite; }
     </style>
 </head>
@@ -17,13 +17,13 @@
     <div id="overlay-start" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center cursor-pointer" onclick="mulaiAplikasi()">
         <div class="text-6xl mb-4 animate-bounce">👆</div>
         <h1 class="text-3xl font-bold text-green-400">KLIK LAYAR UNTUK MULAI</h1>
-        <p class="text-gray-400 mt-2">Wajib klik agar suara notifikasi aktif</p>
+        <p class="text-gray-400 mt-2">Aktifkan Suara & Bluetooth Mode</p>
     </div>
 
     <nav class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center sticky top-0 z-40 shadow-lg">
         <div class="flex items-center gap-2">
-            <span class="text-2xl">☕</span>
-            <h1 class="text-xl font-bold tracking-wider">KASIR MONITOR</h1>
+            <span class="text-2xl">🖨️</span>
+            <h1 class="text-xl font-bold tracking-wider">KASIR + PRINTER</h1>
         </div>
         <div id="status-koneksi" class="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">Menghubungkan...</div>
     </nav>
@@ -52,7 +52,7 @@
     <script>
         // --- KONFIGURASI SUPABASE ---
         const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co'; 
-        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; // <--- JANGAN LUPA KEY ANDA!
+        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; // Key Anda sudah benar
         
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let audioNotif = new Audio('notif.wav'); 
@@ -72,7 +72,6 @@
 
         async function ambilData() {
             document.getElementById('status-koneksi').innerText = "🔄 Sync...";
-            // Kita ambil juga kolom 'metode_bayar' dan 'bukti_url'
             const { data, error } = await client
                 .from('pesanan')
                 .select('*')
@@ -103,10 +102,14 @@
 
             // RENDER KARTU
             container.innerHTML = listTampil.map(o => {
-                // Tentukan Label Metode Bayar
+                // Label Metode Bayar
                 let labelMetode = o.metode_bayar === 'qr' 
                     ? `<span class="bg-blue-600 text-white text-xs px-2 py-1 rounded font-bold">QRIS</span>`
                     : `<span class="bg-orange-600 text-white text-xs px-2 py-1 rounded font-bold">TUNAI</span>`;
+
+                // Sanitasi data untuk tombol print (menghindari error kutip/enter)
+                const safeCatatan = (o.catatan || '').replace(/\n/g, '\\n').replace(/'/g, "\\'");
+                const safeNama = (o.nama_konsumen || 'Tanpa Nama').replace(/'/g, "\\'");
 
                 return `
                 <div class="bg-gray-800 rounded-xl overflow-hidden shadow-xl border border-gray-700 flex flex-col ${o.status_bayar==='pending' ? 'pesanan-baru' : ''}">
@@ -126,80 +129,137 @@
                         <pre class="whitespace-pre-wrap font-sans text-gray-300 text-sm leading-relaxed">${o.catatan}</pre>
                     </div>
 
-                    <div class="p-4 bg-gray-900 flex justify-between items-center">
-                        <div>
+                    <div class="p-4 bg-gray-900 flex justify-between items-center gap-2">
+                        <div class="flex-grow">
                             <p class="text-xs text-gray-500">Total</p>
                             <p class="text-xl font-bold text-white">Rp ${parseInt(o.total_bayar).toLocaleString()}</p>
                         </div>
                         
                         ${o.status_bayar === 'pending' ? 
-                        // TOMBOL CEK / BAYAR (Kirim semua data penting)
-                        `<button onclick="cekPembayaran(${o.id}, '${o.nama_konsumen}', ${o.total_bayar}, '${o.metode_bayar}', '${o.bukti_url}')" 
-                           class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition">
-                            ${o.metode_bayar === 'qr' ? 'CEK BUKTI 📷' : 'TERIMA UANG 💵'}
-                        </button>` 
+                        // MODE PENDING: Ada tombol TOLAK & TERIMA
+                        `
+                        <button onclick="hapusPesanan(${o.id})" class="bg-red-900/50 hover:bg-red-700 text-red-200 px-3 py-2 rounded-lg text-sm border border-red-800">
+                            🗑️
+                        </button>
+                        <button onclick="cekPembayaran(${o.id}, '${safeNama}', ${o.total_bayar}, '${o.metode_bayar}', '${o.bukti_url}')" 
+                           class="flex-grow bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition text-sm">
+                            ${o.metode_bayar === 'qr' ? 'CEK BUKTI' : 'TERIMA'}
+                        </button>
+                        ` 
                         : 
-                        `<span class="text-green-500 font-bold border border-green-500/30 px-3 py-1 rounded bg-green-900/20">LUNAS</span>`
+                        // MODE LUNAS: Ada tombol PRINT
+                        `
+                        <button onclick="printStruk('${o.no_meja}', '${safeNama}', '${safeCatatan}', ${o.total_bayar}, '${o.created_at}')" 
+                            class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded border border-gray-500 flex items-center gap-2 font-bold shadow">
+                            🖨️ PRINT
+                        </button>
+                        <span class="text-green-500 font-bold border border-green-500/30 px-3 py-1 rounded bg-green-900/20">LUNAS</span>
+                        `
                         }
                     </div>
                 </div>
             `}).join('');
         }
 
-        // --- LOGIKA CEK PEMBAYARAN PINTAR ---
+        // --- FUNGSI PRINT BLUETOOTH (RawBT Scheme) ---
+        function printStruk(meja, nama, items, total, tanggal) {
+            let tgl = new Date(tanggal).toLocaleString('id-ID');
+            let rupiah = parseInt(total).toLocaleString('id-ID');
+
+            // Format ESC/POS
+            let struk = "";
+            struk += "\x1b\x40"; // Init
+            struk += "\x1b\x61\x01"; // Center
+            struk += "\x1b\x21\x30"; // Double Size
+            struk += "CAFE ANDA\n"; // GANTI NAMA CAFE DISINI
+            struk += "\x1b\x21\x00"; // Normal
+            struk += "Jl. Raya No. 123\n"; // GANTI ALAMAT DISINI
+            struk += "--------------------------------\n";
+            
+            struk += "\x1b\x61\x00"; // Left
+            struk += `Tgl : ${tgl}\n`;
+            struk += `Meja: ${meja} - ${nama}\n`;
+            struk += "--------------------------------\n";
+            
+            // Item List (Data dari 'catatan')
+            struk += items + "\n";
+            
+            struk += "--------------------------------\n";
+            struk += "\x1b\x61\x02"; // Right
+            struk += "\x1b\x21\x10"; // Double Height
+            struk += `TOTAL: Rp ${rupiah}\n`;
+            struk += "\x1b\x21\x00"; // Normal
+            
+            struk += "--------------------------------\n";
+            struk += "\x1b\x61\x01"; // Center
+            struk += "Terima Kasih\n";
+            struk += "Simpan struk sebagai bukti\n";
+            struk += "\n\n\n"; // Feed paper
+
+            // Kirim ke Aplikasi RawBT
+            let url = "rawbt:data=" + encodeURIComponent(struk);
+            window.location.href = url;
+        }
+
+        // --- FUNGSI HAPUS PESANAN (TOLAK) ---
+        async function hapusPesanan(id) {
+            const result = await Swal.fire({
+                title: 'Tolak Pesanan?',
+                text: "Yakin ini orderan fiktif/salah?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                background: '#1f2937', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                await client.from('pesanan').delete().eq('id', id);
+                Swal.fire({ title: 'Dihapus!', icon: 'success', timer: 1000, showConfirmButton: false, background: '#1f2937', color: '#fff' });
+            }
+        }
+
+        // --- CEK PEMBAYARAN ---
         async function cekPembayaran(id, nama, total, metode, buktiUrl) {
             let rupiah = parseInt(total).toLocaleString('id-ID');
 
             if (metode === 'qr') {
-                // JIKA QR: Tampilkan Foto Bukti dari Konsumen
                 if(!buktiUrl || buktiUrl === 'null' || buktiUrl === 'undefined') {
                     Swal.fire('Info', 'Pelanggan memilih QR tapi belum upload bukti.', 'info');
                     return;
                 }
-
                 const result = await Swal.fire({
-                    title: 'VERIFIKASI BUKTI TF',
+                    title: 'VERIFIKASI BUKTI',
                     text: `Total: Rp ${rupiah} (a.n ${nama})`,
-                    imageUrl: buktiUrl,     // <--- INI FOTO DARI DATABASE/PELANGGAN
+                    imageUrl: buktiUrl,
                     imageAlt: 'Bukti Transfer',
                     imageHeight: 400,
                     showCancelButton: true,
                     confirmButtonText: '✅ Valid (Lunas)',
                     cancelButtonText: 'Batal',
                     confirmButtonColor: '#10B981',
-                    cancelButtonColor: '#d33',
                     background: '#1f2937', color: '#fff'
                 });
-
                 if (result.isConfirmed) updateLunas(id);
-
             } else {
-                // JIKA TUNAI: Tampilkan Konfirmasi Biasa
                 const result = await Swal.fire({
                     title: 'TERIMA TUNAI?',
-                    text: `Pastikan uang Rp ${rupiah} sudah diterima dari ${nama}.`,
+                    text: `Pastikan uang Rp ${rupiah} diterima dari ${nama}.`,
                     icon: 'question',
                     showCancelButton: true,
-                    confirmButtonText: 'Ya, Uang Diterima',
+                    confirmButtonText: 'Ya, Terima Uang',
                     cancelButtonText: 'Batal',
                     confirmButtonColor: '#10B981',
-                    cancelButtonColor: '#d33',
                     background: '#1f2937', color: '#fff'
                 });
-
                 if (result.isConfirmed) updateLunas(id);
             }
         }
 
         async function updateLunas(id) {
             await client.from('pesanan').update({ status_bayar: 'lunas' }).eq('id', id);
-            Swal.fire({
-                title: 'Lunas!',
-                icon: 'success',
-                timer: 1000,
-                showConfirmButton: false,
-                background: '#1f2937', color: '#fff'
-            });
+            Swal.fire({ title: 'Lunas!', icon: 'success', timer: 1000, showConfirmButton: false, background: '#1f2937', color: '#fff' });
         }
 
         function gantiFilter(status) {
@@ -216,10 +276,7 @@
                     Swal.fire({
                         title: 'PESANAN MASUK!',
                         html: `<h2 class="text-3xl font-bold text-orange-500">Meja ${payload.new.no_meja}</h2>`,
-                        icon: 'success',
-                        timer: 3000,
-                        showConfirmButton: false,
-                        background: '#1f2937', color: '#fff'
+                        icon: 'success', timer: 3000, showConfirmButton: false, background: '#1f2937', color: '#fff'
                     });
                 }
                 ambilData();
