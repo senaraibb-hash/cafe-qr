@@ -3,50 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Cafe System</title>
+    <title>LOGIN SISTEM CAFE</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="manifest" href="manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
 </head>
-<body class="bg-gray-900 h-screen flex items-center justify-center p-6">
+<body class="bg-gray-900 min-h-screen flex items-center justify-center font-sans">
+
     <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-700">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-black text-white tracking-tighter">CAFE<span class="text-orange-500">PRO</span></h1>
-            <p class="text-xs text-gray-400 mt-1">Sistem Manajemen Terpadu</p>
+            <div class="text-6xl mb-2">☕</div>
+            <h1 class="text-2xl font-bold text-white tracking-widest">SYSTEM LOGIN</h1>
+            <p class="text-gray-400 text-sm">Masuk untuk melanjutkan</p>
         </div>
-        <form id="loginForm" class="space-y-4">
-            <input type="text" id="username" class="w-full p-4 bg-gray-900 text-white rounded-xl border border-gray-700 focus:border-orange-500 outline-none" placeholder="Username" required>
-            <input type="password" id="password" class="w-full p-4 bg-gray-900 text-white rounded-xl border border-gray-700 focus:border-orange-500 outline-none" placeholder="Password" required>
-            <button type="submit" id="btn-login" class="w-full bg-orange-600 text-white font-bold py-4 rounded-xl hover:bg-orange-700 transition shadow-lg">MASUK APLIKASI</button>
-        </form>
+
+        <div class="space-y-4">
+            <div>
+                <label class="text-gray-400 text-xs font-bold uppercase">Username</label>
+                <input type="text" id="user" class="w-full bg-gray-900 text-white p-3 rounded-lg border border-gray-700 focus:border-blue-500 outline-none transition" placeholder="kasir / owner">
+            </div>
+            <div>
+                <label class="text-gray-400 text-xs font-bold uppercase">Password</label>
+                <input type="password" id="pass" class="w-full bg-gray-900 text-white p-3 rounded-lg border border-gray-700 focus:border-blue-500 outline-none transition" placeholder="••••••">
+            </div>
+            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg transform active:scale-95 transition">
+                MASUK SEKARANG
+            </button>
+        </div>
+
+        <div class="mt-6 text-center text-xs text-gray-500">
+            <p>Akses Terbatas &copy; 2026 Cafe System</p>
+        </div>
     </div>
 
     <script>
-        // --- ISI KUNCI API ANDA DISINI ---
-        const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb';
-        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // --- KONFIGURASI PASSWORD (BISA DIGANTI) ---
+        const USER_KASIR = 'kasir';
+        const PASS_KASIR = 'kasir123';
+        
+        const USER_OWNER = 'owner';
+        const PASS_OWNER = 'admin123';
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-            const btn = document.getElementById('btn-login');
+        function login() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
 
-            btn.innerText = 'Memproses...'; btn.disabled = true;
-
-            const { data, error } = await client.from('users').select('*').eq('username', u).eq('password', p).single();
-
-            if (data) {
-                localStorage.setItem('role', data.role); // Simpan sesi
-                Swal.fire({icon: 'success', title: 'Login Berhasil', showConfirmButton: false, timer: 1000, background: '#1f2937', color:'#fff'})
-                    .then(() => window.location.href = data.role === 'kasir' ? 'kasir.html' : 'owner.html');
-            } else {
-                Swal.fire({icon: 'error', title: 'Gagal', text: 'Username/Password Salah', background: '#1f2937', color:'#fff'});
-                btn.innerText = 'MASUK APLIKASI'; btn.disabled = false;
+            if (u === USER_KASIR && p === PASS_KASIR) {
+                // Simpan kunci masuk untuk Kasir
+                sessionStorage.setItem('role', 'kasir_valid');
+                Swal.fire({ icon: 'success', title: 'Halo Kasir!', timer: 1000, showConfirmButton: false })
+                    .then(() => window.location.href = 'kasir.html');
+            } 
+            else if (u === USER_OWNER && p === PASS_OWNER) {
+                // Simpan kunci masuk untuk Owner
+                sessionStorage.setItem('role', 'owner_valid');
+                Swal.fire({ icon: 'success', title: 'Selamat Datang Bos!', timer: 1000, showConfirmButton: false })
+                    .then(() => window.location.href = 'owner.html');
+            } 
+            else {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Username atau Password salah!', background: '#1f2937', color: '#fff' });
             }
+        }
+        
+        // Cek enter key
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') login();
         });
     </script>
 </body>
