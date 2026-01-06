@@ -7,15 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>.scrollbar-hide::-webkit-scrollbar { display: none; }</style>
 </head>
 <body class="bg-gray-50 pb-32">
+
     <div class="bg-white p-4 sticky top-0 z-20 shadow-sm">
-        <div class="flex justify-between items-center mb-3">
-            <div><h1 class="font-bold text-xl text-gray-800">Menu Cafe</h1><p class="text-xs text-gray-500">Meja: <span id="lbl-meja" class="font-bold text-orange-600">--</span></p></div>
-        </div>
-        <div class="flex gap-2 overflow-x-auto scrollbar-hide">
+        <h1 class="font-bold text-xl text-gray-800">Menu Cafe</h1>
+        <p class="text-xs text-gray-500">Meja: <span id="lbl-meja" class="font-bold text-orange-600">--</span></p>
+        
+        <div class="flex gap-2 overflow-x-auto scrollbar-hide mt-3">
             <button onclick="renderMenu('all')" class="bg-gray-800 text-white px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap">Semua</button>
             <button onclick="renderMenu('minuman')" class="bg-white border text-gray-600 px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap">Minuman</button>
             <button onclick="renderMenu('makanan')" class="bg-white border text-gray-600 px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap">Makanan</button>
@@ -27,36 +27,31 @@
     <div id="cart-bar" class="fixed bottom-0 w-full bg-white shadow-[0_-5px_10px_rgba(0,0,0,0.1)] rounded-t-2xl z-30 translate-y-full transition-transform duration-300">
         <div class="p-5">
             <div class="flex justify-between items-center mb-4">
-                <div><p class="text-xs text-gray-400">Total Bayar</p><p id="lbl-total" class="text-xl font-black text-gray-800">Rp 0</p></div>
+                <div><p class="text-xs text-gray-400">Total</p><p id="lbl-total" class="text-xl font-black text-gray-800">Rp 0</p></div>
                 <p id="lbl-items" class="font-bold text-orange-600">0 Item</p>
             </div>
             
             <div id="checkout-area" class="hidden space-y-3 mb-4">
-                <input type="text" id="nama" placeholder="Nama Pemesan" class="w-full p-3 bg-gray-100 rounded-xl font-bold">
-                <textarea id="catatan" placeholder="Catatan (opsional)" class="w-full p-3 bg-gray-100 rounded-xl text-sm"></textarea>
-                
+                <input type="text" id="nama" placeholder="Nama Pemesan" class="w-full p-3 bg-gray-100 rounded-xl font-bold border">
+                <textarea id="catatan" placeholder="Catatan (Opsi)" class="w-full p-3 bg-gray-100 rounded-xl text-sm border"></textarea>
                 <div class="flex gap-2">
                     <button onclick="setMethod('cash')" id="btn-cash" class="flex-1 p-3 border rounded-xl font-bold bg-orange-50 border-orange-500 text-orange-700">Tunai</button>
                     <button onclick="setMethod('qr')" id="btn-qr" class="flex-1 p-3 border rounded-xl font-bold text-gray-400">QRIS</button>
                 </div>
-
-                <div id="qr-box" class="hidden text-center bg-gray-50 p-3 rounded-xl border border-dashed border-gray-300">
-                    
-                    <p class="text-xs font-bold text-gray-500 mb-2">Scan QRIS Ini:</p>
-                    <img src="qr.png" alt="QRIS Toko" class="w-40 mx-auto rounded-lg shadow-md mb-3 border">
-                    
-                    <p class="text-xs mb-2">Lalu Upload Bukti Transfer:</p>
+                <div id="qr-box" class="hidden text-center bg-blue-50 p-3 rounded-xl border border-dashed border-blue-300">
+                    <p class="text-xs font-bold text-blue-600 mb-2">SCAN QRIS:</p>
+                    <img src="qr.png" alt="QR" class="w-32 mx-auto rounded mb-2">
                     <input type="file" id="bukti" accept="image/*" class="text-xs w-full">
                 </div>
             </div>
-
-            <button onclick="handleBtn()" id="main-btn" class="w-full bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg">LANJUT PESAN</button>
+            <button onclick="handleBtn()" id="main-btn" class="w-full bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg">LANJUT</button>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb';
+        // CONFIG
+        const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; 
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let menus = [], cart = {}, method = 'cash', isCheckout = false;
@@ -65,8 +60,7 @@
 
         async function init() {
             const { data } = await client.from('menu').select('*').eq('tersedia', true);
-            menus = data || [];
-            renderMenu('all');
+            menus = data || []; renderMenu('all');
         }
 
         function renderMenu(cat) {
@@ -75,134 +69,60 @@
             container.innerHTML = filtered.map(m => {
                 const qty = cart[m.id] || 0;
                 return `
-                <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-                    <img src="${m.gambar}" class="w-full h-28 object-cover rounded-xl mb-2 bg-gray-200">
-                    <div class="flex-1">
-                        <h4 class="font-bold text-sm leading-tight mb-1">${m.nama}</h4>
-                        <p class="text-orange-600 font-bold text-sm">Rp ${m.harga.toLocaleString()}</p>
-                    </div>
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full">
+                    <img src="${m.gambar}" class="w-full h-28 object-cover rounded-xl mb-2 bg-gray-100">
+                    <div class="flex-1"><h4 class="font-bold text-sm leading-tight mb-1">${m.nama}</h4><p class="text-orange-600 font-bold text-sm">Rp ${m.harga.toLocaleString()}</p></div>
                     <div class="mt-2 pt-2 border-t">
-                        ${qty === 0 ? 
-                        `<button onclick="add(${m.id}, 1)" class="w-full bg-gray-100 py-2 rounded-lg text-xs font-bold hover:bg-orange-100 hover:text-orange-600">TAMBAH +</button>` : 
-                        `<div class="flex justify-between items-center bg-orange-50 rounded-lg p-1">
-                            <button onclick="add(${m.id}, -1)" class="w-8 h-8 font-bold text-orange-600">-</button>
-                            <span class="font-bold text-sm">${qty}</span>
-                            <button onclick="add(${m.id}, 1)" class="w-8 h-8 bg-orange-500 text-white rounded font-bold">+</button>
-                        </div>`}
+                        ${qty === 0 ? `<button onclick="add(${m.id}, 1)" class="w-full bg-gray-50 py-2 rounded-lg text-xs font-bold hover:bg-orange-50">TAMBAH</button>` : 
+                        `<div class="flex justify-between items-center bg-orange-50 rounded-lg p-1"><button onclick="add(${m.id}, -1)" class="w-8 h-8 font-bold text-orange-600">-</button><span class="font-bold text-sm">${qty}</span><button onclick="add(${m.id}, 1)" class="w-8 h-8 font-bold text-white bg-orange-500 rounded">+</button></div>`}
                     </div>
                 </div>`;
             }).join('');
         }
 
         function add(id, val) {
-            if(!cart[id]) cart[id] = 0;
-            cart[id] += val;
-            if(cart[id] <= 0) delete cart[id];
-            
-            // Re-render UI (simpan filter kategori yg aktif)
-            // (Opsional: untuk penyederhanaan di sini kita reset ke active category jika perlu, tapi logic sederhana sudah cukup)
-            const catButtons = document.querySelectorAll('button[onclick^="renderMenu"]');
-            let activeCat = 'all';
-            // Logic sederhana render ulang sesuai data
-            renderMenu(activeCat); 
-            // Note: Idealnya simpan state kategori, tapi biar gak ribet codingannya, default renderMenu akan refresh tampilan qty.
-            // Kita perbaiki renderMenu sedikit agar tidak reset tampilan scroll
-            
-            // Render ulang hanya bagian qty tombol sebenernya lebih efisien, 
-            // tapi karena 'renderMenu' di atas merender ulang semua grid, 
-            // kita panggil renderMenu lagi dengan kategori yang sedang dilihat user.
-            // *Fix Cepat*: Ambil text button yg sedang aktif (bg-gray-800)
-            const activeBtn = Array.from(document.querySelectorAll('button[onclick^="renderMenu"]')).find(b => b.classList.contains('bg-gray-800'));
-            if(activeBtn) {
-                const catName = activeBtn.innerText.toLowerCase();
-                renderMenu(catName === 'semua' ? 'all' : catName);
-            }
-
-            calc();
+            if(!cart[id]) cart[id]=0; cart[id]+=val; if(cart[id]<=0) delete cart[id];
+            renderMenu('all'); calc(); // Sederhana: refresh all
         }
 
         function calc() {
-            let total = 0, count = 0;
-            menus.forEach(m => { if(cart[m.id]) { total += m.harga * cart[m.id]; count += cart[m.id]; }});
-            
-            document.getElementById('lbl-total').innerText = 'Rp ' + total.toLocaleString();
-            document.getElementById('lbl-items').innerText = count + ' Item';
-            
-            const bar = document.getElementById('cart-bar');
-            if(count > 0) bar.classList.remove('translate-y-full');
-            else { bar.classList.add('translate-y-full'); isCheckout = false; document.getElementById('checkout-area').classList.add('hidden'); }
+            let total=0, count=0; menus.forEach(m=>{if(cart[m.id]){total+=m.harga*cart[m.id]; count+=cart[m.id]}});
+            document.getElementById('lbl-total').innerText='Rp '+total.toLocaleString(); document.getElementById('lbl-items').innerText=count+' Item';
+            const bar=document.getElementById('cart-bar');
+            if(count>0) bar.classList.remove('translate-y-full');
+            else { bar.classList.add('translate-y-full'); isCheckout=false; document.getElementById('checkout-area').classList.add('hidden'); document.getElementById('main-btn').innerText="LANJUT"; }
         }
 
         function handleBtn() {
-            if(!isCheckout) {
-                isCheckout = true;
-                document.getElementById('checkout-area').classList.remove('hidden');
-                document.getElementById('main-btn').innerText = 'KIRIM PESANAN';
-                document.getElementById('main-btn').classList.replace('bg-gray-800', 'bg-orange-600');
-            } else submitOrder();
+            if(!isCheckout){ isCheckout=true; document.getElementById('checkout-area').classList.remove('hidden'); document.getElementById('main-btn').innerText='KIRIM'; }
+            else submitOrder();
         }
 
         function setMethod(m) {
-            method = m;
-            document.getElementById('btn-cash').className = `flex-1 p-3 border rounded-xl font-bold ${m==='cash'?'bg-orange-50 border-orange-500 text-orange-700':'text-gray-400'}`;
-            document.getElementById('btn-qr').className = `flex-1 p-3 border rounded-xl font-bold ${m==='qr'?'bg-blue-50 border-blue-500 text-blue-700':'text-gray-400'}`;
-            
-            // Logic Tampilkan/Sembunyikan Kotak QR
-            const qrBox = document.getElementById('qr-box');
-            if (m === 'qr') {
-                qrBox.classList.remove('hidden');
-            } else {
-                qrBox.classList.add('hidden');
-            }
+            method=m;
+            document.getElementById('btn-cash').className=`flex-1 p-3 border rounded-xl font-bold ${m==='cash'?'bg-orange-50 border-orange-500 text-orange-700':'text-gray-400'}`;
+            document.getElementById('btn-qr').className=`flex-1 p-3 border rounded-xl font-bold ${m==='qr'?'bg-blue-50 border-blue-500 text-blue-700':'text-gray-400'}`;
+            document.getElementById('qr-box').classList.toggle('hidden', m!=='qr');
         }
 
         async function submitOrder() {
-            const nama = document.getElementById('nama').value;
-            if(!nama) return Swal.fire('Nama?', 'Wajib diisi ya kak', 'warning');
-
-            const btn = document.getElementById('main-btn'); btn.innerText = 'Mengirim...'; btn.disabled = true;
-
+            const nama=document.getElementById('nama').value; if(!nama) return Swal.fire('Nama?','Wajib diisi','warning');
+            const btn=document.getElementById('main-btn'); btn.innerText='Mengirim...'; btn.disabled=true;
             try {
-                let urlBukti = null;
-                // Simpan items sebagai string rapi
-                let itemsStr = [];
-                let total = 0;
-
-                menus.forEach(m => {
-                    if(cart[m.id]) {
-                        itemsStr.push(`${cart[m.id]}x ${m.nama}`);
-                        total += m.harga * cart[m.id];
-                    }
-                });
-                const detailItems = itemsStr.join('\n'); // Gabung jadi string enter
-
-                if(method === 'qr') {
-                    const file = document.getElementById('bukti').files[0];
-                    if(!file) throw new Error("Upload bukti transfer dulu!");
-                    const fname = `bukti_${Date.now()}.jpg`;
-                    await client.storage.from('bukti-transfer').upload(fname, file);
-                    const { data } = client.storage.from('bukti-transfer').getPublicUrl(fname);
-                    urlBukti = data.publicUrl;
+                let urlBukti=null;
+                if(method==='qr'){
+                    const file=document.getElementById('bukti').files[0]; if(!file) throw new Error("Upload bukti!");
+                    const fname=`bukti_${Date.now()}.jpg`; await client.storage.from('bukti-transfer').upload(fname, file);
+                    const {data}=client.storage.from('bukti-transfer').getPublicUrl(fname); urlBukti=data.publicUrl;
                 }
-
-                // SESUAIKAN DENGAN NAMA KOLOM DI DATABASE ANDA
-                // (no_meja, nama_konsumen, catatan, items/pesanan?)
-                const { error } = await client.from('pesanan').insert([{
-                    nama_konsumen: nama, 
-                    no_meja: meja, 
-                    total_bayar: total,
-                    metode_bayar: method, 
-                    catatan: detailItems + "\n\nCatatan: " + document.getElementById('catatan').value, // Kita gabung item & catatan biar muncul di kasir
-                    bukti_url: urlBukti
-                }]);
-
+                let items=[]; let total=0;
+                menus.forEach(m=>{if(cart[m.id]){items.push(`${cart[m.id]}x ${m.nama}`); total+=m.harga*cart[m.id]}});
+                const catatanFinal=items.join('\n') + (document.getElementById('catatan').value ? `\n\nNote: ${document.getElementById('catatan').value}` : '');
+                
+                const {error}=await client.from('pesanan').insert([{nama_konsumen:nama, no_meja:meja, total_bayar:total, metode_bayar:method, catatan:catatanFinal, bukti_url:urlBukti, di_arsip:false}]);
                 if(error) throw error;
-                Swal.fire('Berhasil!', 'Pesanan masuk dapur.', 'success').then(() => location.reload());
-
-            } catch (err) {
-                Swal.fire('Error', err.message, 'error');
-                btn.innerText = 'COBA LAGI'; btn.disabled = false;
-            }
+                Swal.fire('Sukses','Pesanan terkirim','success').then(()=>location.reload());
+            } catch(e) { Swal.fire('Gagal',e.message,'error'); btn.disabled=false; }
         }
         init();
     </script>
