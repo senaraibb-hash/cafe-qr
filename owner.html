@@ -3,178 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Owner Dashboard</title>
+    <title>OWNER REPORT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="manifest" href="manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="max-w-4xl mx-auto p-4">
-        <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm">
-            <h1 class="font-bold text-xl text-gray-800">Owner Dashboard</h1>
-            <div><p class="text-xs text-gray-400">Omzet Hari Ini</p><p id="omzet" class="font-black text-2xl text-green-600">Rp 0</p></div>
-        </div>
+<body class="bg-gray-100 text-gray-800 min-h-screen font-sans">
 
-        <div class="flex gap-4 mb-6">
-            <button onclick="view('stats')" class="bg-gray-800 text-white px-6 py-2 rounded-lg font-bold text-sm shadow">Statistik</button>
-            <button onclick="view('menu')" class="bg-white text-gray-600 border px-6 py-2 rounded-lg font-bold text-sm shadow">Menu Manager</button>
+    <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-chart-line text-2xl"></i>
+                <div>
+                    <h1 class="font-bold text-xl tracking-wider">OWNER DASHBOARD</h1>
+                    <p class="text-xs text-blue-200">Laporan Keuangan</p>
+                </div>
+            </div>
+            <button onclick="location.reload()" class="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg text-sm transition">
+                <i class="fa-solid fa-sync"></i> Refresh
+            </button>
         </div>
+    </nav>
 
-        <div id="p-stats" class="space-y-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm"><h3 class="font-bold mb-4">Grafik Penjualan</h3><div class="h-64"><canvas id="chart"></canvas></div></div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm overflow-x-auto">
-                <table class="w-full text-sm text-left"><tbody id="table-history"></tbody></table>
+    <div class="max-w-7xl mx-auto p-6">
+        
+        <h2 class="text-lg font-bold mb-4 text-gray-600 border-l-4 border-blue-900 pl-3">PENDAPATAN BERSIH</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-blue-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm font-bold uppercase">Hari Ini</p>
+                        <h3 id="omzet-hari" class="text-3xl font-black text-blue-900 mt-2">Rp 0</h3>
+                        <p id="trx-hari" class="text-xs text-gray-400 mt-1">0 Transaksi</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full text-blue-600"><i class="fa-solid fa-calendar-day text-xl"></i></div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-green-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm font-bold uppercase">Bulan Ini</p>
+                        <h3 id="omzet-bulan" class="text-3xl font-black text-green-900 mt-2">Rp 0</h3>
+                        <p id="trx-bulan" class="text-xs text-gray-400 mt-1">0 Transaksi</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full text-green-600"><i class="fa-solid fa-calendar-alt text-xl"></i></div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-purple-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm font-bold uppercase">Tahun Ini</p>
+                        <h3 id="omzet-tahun" class="text-3xl font-black text-purple-900 mt-2">Rp 0</h3>
+                        <p id="trx-tahun" class="text-xs text-gray-400 mt-1">0 Transaksi</p>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-full text-purple-600"><i class="fa-solid fa-chart-pie text-xl"></i></div>
+                </div>
             </div>
         </div>
 
-        <div id="p-menu" class="hidden space-y-4">
-            <button onclick="addMenu()" class="w-full bg-orange-600 text-white py-3 rounded-xl font-bold">+ Tambah Menu Baru</button>
-            <div id="list-menu" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="p-5 border-b flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50">
+                <h2 class="font-bold text-gray-700"><i class="fa-solid fa-list mr-2"></i> RIWAYAT TRANSAKSI</h2>
+                <div class="flex gap-2">
+                    <button onclick="renderTable('hari')" class="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-sm font-bold text-blue-600">Hari Ini</button>
+                    <button onclick="renderTable('bulan')" class="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-sm font-bold text-green-600">Bulan Ini</button>
+                    <button onclick="renderTable('semua')" class="px-4 py-2 bg-gray-800 text-white border rounded hover:bg-gray-700 text-sm font-bold">Semua</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-100 text-gray-600 uppercase text-xs font-bold">
+                        <tr>
+                            <th class="p-4 border-b">Waktu</th>
+                            <th class="p-4 border-b">Meja</th>
+                            <th class="p-4 border-b">Detail</th>
+                            <th class="p-4 border-b text-right">Total</th>
+                            <th class="p-4 border-b text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-body" class="text-sm text-gray-700"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb';
+        const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; 
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        if(localStorage.getItem('role') !== 'owner') {
-        window.location.href = 'login.html';
-    }
+        let allData = [];
+        init();
 
-    // --- INISIALISASI ---
-    async function init() {
-        // 1. Hitung Omzet Hari Ini
-        const today = new Date().toISOString().split('T')[0];
-        const { data: orders } = await client.from('pesanan')
-            .select('*')
-            .gte('created_at', today)
-            .eq('status_bayar', 'lunas');
-        
-        let total = 0, cash = 0, qr = 0;
-        if(orders) {
-            orders.forEach(o => { 
-                total += o.total_bayar; 
-                if(o.metode_bayar==='cash') cash+=o.total_bayar; else qr+=o.total_bayar; 
-            });
-            
-            // Render Tabel Riwayat
-            document.getElementById('table-history').innerHTML = orders.slice(0,10).map(o => `
+        async function init() {
+            // Ambil SEMUA data yang LUNAS (termasuk arsip)
+            const { data, error } = await client
+                .from('pesanan')
+                .select('*')
+                .eq('status_bayar', 'lunas') 
+                .order('created_at', { ascending: false });
+
+            if(!error) {
+                allData = data || [];
+                hitungStats();
+                renderTable('hari');
+            }
+        }
+
+        function hitungStats() {
+            const now = new Date();
+            const todayStr = now.toDateString();
+            const thisMonth = now.getMonth();
+            const thisYear = now.getFullYear();
+
+            // Filter Data
+            const dataHari = allData.filter(d => new Date(d.created_at).toDateString() === todayStr);
+            const dataBulan = allData.filter(d => { const t = new Date(d.created_at); return t.getMonth()===thisMonth && t.getFullYear()===thisYear; });
+            const dataTahun = allData.filter(d => new Date(d.created_at).getFullYear() === thisYear);
+
+            // Update UI
+            updateCard('omzet-hari', 'trx-hari', dataHari);
+            updateCard('omzet-bulan', 'trx-bulan', dataBulan);
+            updateCard('omzet-tahun', 'trx-tahun', dataTahun);
+        }
+
+        function updateCard(idOmzet, idTrx, data) {
+            const total = data.reduce((sum, d) => sum + d.total_bayar, 0);
+            document.getElementById(idOmzet).innerText = formatRupiah(total);
+            document.getElementById(idTrx).innerText = `${data.length} Transaksi`;
+        }
+
+        function renderTable(filter) {
+            const tbody = document.getElementById('tabel-body');
+            tbody.innerHTML = '';
+            const now = new Date();
+            let filtered = [];
+
+            if(filter === 'hari') filtered = allData.filter(d => new Date(d.created_at).toDateString() === now.toDateString());
+            else if(filter === 'bulan') filtered = allData.filter(d => new Date(d.created_at).getMonth() === now.getMonth());
+            else filtered = allData;
+
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-400">Tidak ada data.</td></tr>`; return; }
+
+            tbody.innerHTML = filtered.map(d => `
                 <tr class="border-b hover:bg-gray-50 transition">
-                    <td class="p-3 text-gray-600">${o.nama_konsumen}</td>
-                    <td class="p-3 text-right font-bold text-gray-800">Rp ${o.total_bayar.toLocaleString()}</td>
+                    <td class="p-4 text-xs font-mono text-gray-500">${new Date(d.created_at).toLocaleString()}</td>
+                    <td class="p-4 font-bold text-gray-700">Meja ${d.no_meja}<br><span class="text-xs font-normal text-gray-500">${d.nama_konsumen}</span></td>
+                    <td class="p-4"><pre class="text-xs text-gray-600 font-sans whitespace-pre-wrap">${d.catatan}</pre></td>
+                    <td class="p-4 text-right font-bold text-gray-800">${formatRupiah(d.total_bayar)}</td>
+                    <td class="p-4 text-center">
+                        ${d.di_arsip ? '<span class="text-xs bg-gray-200 px-2 py-1 rounded text-gray-600">Arsip</span>' : '<span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded font-bold">Aktif</span>'}
+                    </td>
                 </tr>
             `).join('');
-            
-            // Render Grafik
-            new Chart(document.getElementById('chart'), {
-                type: 'doughnut', 
-                data: { labels: ['Cash', 'QRIS'], datasets: [{ data: [cash, qr], backgroundColor: ['#ea580c', '#3b82f6'] }] },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
         }
-        
-        document.getElementById('omzet').innerText = 'Rp ' + total.toLocaleString();
 
-        // 2. Muat Daftar Menu
-        fetchMenu();
-    }
-
-    // --- MANAJEMEN MENU ---
-    async function fetchMenu() {
-        const { data } = await client.from('menu').select('*').order('id');
-        
-        document.getElementById('list-menu').innerHTML = data.map(m => `
-            <div class="bg-white p-4 rounded-xl shadow-sm flex gap-4 items-center border border-gray-100 hover:shadow-md transition">
-                <img src="${m.gambar}" class="w-16 h-16 rounded-lg bg-gray-200 object-cover">
-                <div class="flex-1">
-                    <h4 class="font-bold text-gray-800">${m.nama}</h4>
-                    <p class="text-orange-600 font-bold">Rp ${m.harga.toLocaleString()}</p>
-                    <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500 capitalize">${m.kategori}</span>
-                </div>
-                <button onclick="delMenu(${m.id}, '${m.nama}')" class="bg-red-50 text-red-500 hover:bg-red-600 hover:text-white p-3 rounded-lg transition shadow-sm" title="Hapus Menu">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>
-        `).join('');
-    }
-
-    // --- FUNGSI TAMBAH MENU ---
-    async function addMenu() {
-        const { value: formValues } = await Swal.fire({
-            title: 'Tambah Menu Baru',
-            html:
-                '<input id="swal-nama" class="swal2-input" placeholder="Nama Menu">' +
-                '<input id="swal-harga" type="number" class="swal2-input" placeholder="Harga">' +
-                '<select id="swal-kat" class="swal2-input"><option value="minuman">Minuman</option><option value="makanan">Makanan</option><option value="snack">Snack</option></select>' +
-                '<input id="swal-img" class="swal2-input" placeholder="Link Gambar (URL)">',
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonText: 'Simpan',
-            preConfirm: () => {
-                return [
-                    document.getElementById('swal-nama').value,
-                    document.getElementById('swal-harga').value,
-                    document.getElementById('swal-kat').value,
-                    document.getElementById('swal-img').value
-                ]
-            }
-        });
-
-        if (formValues) {
-            const [nama, harga, kat, img] = formValues;
-            if(!nama || !harga) return Swal.fire('Gagal', 'Nama dan Harga wajib diisi', 'error');
-
-            const { error } = await client.from('menu').insert([{
-                nama: nama, 
-                harga: parseInt(harga), 
-                kategori: kat, 
-                gambar: img || 'https://via.placeholder.com/150'
-            }]);
-
-            if(!error) {
-                Swal.fire('Berhasil', 'Menu ditambahkan', 'success');
-                fetchMenu();
-            }
-        }
-    }
-
-    // --- FUNGSI HAPUS MENU (YANG ANDA TANYAKAN) ---
-    async function delMenu(id, namaMenu) {
-        // Tanya dulu pakai SweetAlert biar keren & aman
-        const result = await Swal.fire({
-            title: 'Hapus Menu?',
-            text: `Yakin ingin menghapus "${namaMenu}" selamanya?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33', // Warna Merah
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, Hapus!',
-            cancelButtonText: 'Batal'
-        });
-
-        if (result.isConfirmed) {
-            // Proses Hapus di Database
-            const { error } = await client.from('menu').delete().eq('id', id);
-            
-            if(!error) {
-                Swal.fire('Terhapus!', 'Menu berhasil dihapus.', 'success');
-                fetchMenu(); // Refresh tampilan otomatis
-            } else {
-                Swal.fire('Gagal', 'Ada masalah koneksi.', 'error');
-            }
-        }
-    }
-
-    // --- GANTI TAB (STATS / MENU) ---
-    function view(tab) {
-        document.getElementById('p-stats').classList.toggle('hidden', tab!=='stats');
-        document.getElementById('p-menu').classList.toggle('hidden', tab!=='menu');
-    }
-
-    // Jalankan awal
-    init();
-</script>
+        function formatRupiah(n) { return 'Rp ' + parseInt(n).toLocaleString('id-ID'); }
+    </script>
+</body>
+</html>
