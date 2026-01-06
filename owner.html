@@ -3,85 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OWNER REPORT</title>
+    <title>OWNER DASHBOARD (SECURE)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 text-gray-800 min-h-screen font-sans">
+<body class="bg-gray-100 min-h-screen font-sans">
 
-    <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-chart-line text-2xl"></i>
-                <div>
-                    <h1 class="font-bold text-xl tracking-wider">OWNER DASHBOARD</h1>
-                    <p class="text-xs text-blue-200">Laporan Keuangan</p>
-                </div>
-            </div>
-            <button onclick="location.reload()" class="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg text-sm transition">
-                <i class="fa-solid fa-sync"></i> Refresh
-            </button>
-        </div>
+    <script>
+        if (sessionStorage.getItem('role') !== 'owner_valid') {
+            alert("MAAF, INI AREA KHUSUS OWNER!");
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <nav class="bg-blue-900 text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3"><i class="fa-solid fa-chart-line text-2xl"></i><h1 class="font-bold text-xl">OWNER DASHBOARD</h1></div>
+        <button onclick="logout()" class="bg-red-500 hover:bg-red-400 px-4 py-2 rounded text-sm font-bold">LOGOUT</button>
     </nav>
 
     <div class="max-w-7xl mx-auto p-6">
-        
-        <h2 class="text-lg font-bold mb-4 text-gray-600 border-l-4 border-blue-900 pl-3">PENDAPATAN BERSIH</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-blue-500">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-gray-500 text-sm font-bold uppercase">Hari Ini</p>
-                        <h3 id="omzet-hari" class="text-3xl font-black text-blue-900 mt-2">Rp 0</h3>
-                        <p id="trx-hari" class="text-xs text-gray-400 mt-1">0 Transaksi</p>
-                    </div>
-                    <div class="bg-blue-100 p-3 rounded-full text-blue-600"><i class="fa-solid fa-calendar-day text-xl"></i></div>
-                </div>
+                <p class="text-gray-500 text-sm font-bold uppercase">Hari Ini</p>
+                <h3 id="omzet-hari" class="text-3xl font-black text-blue-900 mt-2">Rp 0</h3>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-green-500">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-gray-500 text-sm font-bold uppercase">Bulan Ini</p>
-                        <h3 id="omzet-bulan" class="text-3xl font-black text-green-900 mt-2">Rp 0</h3>
-                        <p id="trx-bulan" class="text-xs text-gray-400 mt-1">0 Transaksi</p>
-                    </div>
-                    <div class="bg-green-100 p-3 rounded-full text-green-600"><i class="fa-solid fa-calendar-alt text-xl"></i></div>
-                </div>
+                <p class="text-gray-500 text-sm font-bold uppercase">Bulan Ini</p>
+                <h3 id="omzet-bulan" class="text-3xl font-black text-green-900 mt-2">Rp 0</h3>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-purple-500">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-gray-500 text-sm font-bold uppercase">Tahun Ini</p>
-                        <h3 id="omzet-tahun" class="text-3xl font-black text-purple-900 mt-2">Rp 0</h3>
-                        <p id="trx-tahun" class="text-xs text-gray-400 mt-1">0 Transaksi</p>
-                    </div>
-                    <div class="bg-purple-100 p-3 rounded-full text-purple-600"><i class="fa-solid fa-chart-pie text-xl"></i></div>
-                </div>
+                <p class="text-gray-500 text-sm font-bold uppercase">Tahun Ini</p>
+                <h3 id="omzet-tahun" class="text-3xl font-black text-purple-900 mt-2">Rp 0</h3>
             </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div class="p-5 border-b flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50">
-                <h2 class="font-bold text-gray-700"><i class="fa-solid fa-list mr-2"></i> RIWAYAT TRANSAKSI</h2>
-                <div class="flex gap-2">
-                    <button onclick="renderTable('hari')" class="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-sm font-bold text-blue-600">Hari Ini</button>
-                    <button onclick="renderTable('bulan')" class="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-sm font-bold text-green-600">Bulan Ini</button>
-                    <button onclick="renderTable('semua')" class="px-4 py-2 bg-gray-800 text-white border rounded hover:bg-gray-700 text-sm font-bold">Semua</button>
+            <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                <h2 class="font-bold text-gray-700">RIWAYAT TRANSAKSI</h2>
+                <div class="space-x-2">
+                    <button onclick="renderTable('hari')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm font-bold">Hari Ini</button>
+                    <button onclick="renderTable('bulan')" class="px-3 py-1 bg-green-100 text-green-700 rounded text-sm font-bold">Bulan Ini</button>
+                    <button onclick="renderTable('semua')" class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm font-bold">Semua</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse text-sm">
                     <thead class="bg-gray-100 text-gray-600 uppercase text-xs font-bold">
-                        <tr>
-                            <th class="p-4 border-b">Waktu</th>
-                            <th class="p-4 border-b">Meja</th>
-                            <th class="p-4 border-b">Detail</th>
-                            <th class="p-4 border-b text-right">Total</th>
-                            <th class="p-4 border-b text-center">Status</th>
-                        </tr>
+                        <tr><th class="p-4 border-b">Waktu</th><th class="p-4 border-b">Detail</th><th class="p-4 border-b">Metode</th><th class="p-4 border-b text-right">Total</th></tr>
                     </thead>
-                    <tbody id="tabel-body" class="text-sm text-gray-700"></tbody>
+                    <tbody id="tabel-body"><tr class="text-center"><td colspan="4" class="p-4">Loading...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -91,74 +62,51 @@
         const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; 
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
         let allData = [];
-        init();
+
+        function logout() { sessionStorage.removeItem('role'); window.location.href = 'login.html'; }
 
         async function init() {
-            // Ambil SEMUA data yang LUNAS (termasuk arsip)
-            const { data, error } = await client
-                .from('pesanan')
-                .select('*')
-                .eq('status_bayar', 'lunas') 
-                .order('created_at', { ascending: false });
-
-            if(!error) {
-                allData = data || [];
-                hitungStats();
-                renderTable('hari');
-            }
+            const { data } = await client.from('pesanan').select('*').eq('status_bayar', 'lunas').order('created_at', { ascending: false });
+            allData = data || []; hitung(); renderTable('hari');
         }
 
-        function hitungStats() {
+        function hitung() {
             const now = new Date();
             const todayStr = now.toDateString();
             const thisMonth = now.getMonth();
             const thisYear = now.getFullYear();
 
-            // Filter Data
-            const dataHari = allData.filter(d => new Date(d.created_at).toDateString() === todayStr);
-            const dataBulan = allData.filter(d => { const t = new Date(d.created_at); return t.getMonth()===thisMonth && t.getFullYear()===thisYear; });
-            const dataTahun = allData.filter(d => new Date(d.created_at).getFullYear() === thisYear);
+            const dHari = allData.filter(d => new Date(d.created_at).toDateString() === todayStr);
+            const dBulan = allData.filter(d => {const t=new Date(d.created_at); return t.getMonth()===thisMonth && t.getFullYear()===thisYear});
+            const dTahun = allData.filter(d => new Date(d.created_at).getFullYear() === thisYear);
 
-            // Update UI
-            updateCard('omzet-hari', 'trx-hari', dataHari);
-            updateCard('omzet-bulan', 'trx-bulan', dataBulan);
-            updateCard('omzet-tahun', 'trx-tahun', dataTahun);
-        }
-
-        function updateCard(idOmzet, idTrx, data) {
-            const total = data.reduce((sum, d) => sum + d.total_bayar, 0);
-            document.getElementById(idOmzet).innerText = formatRupiah(total);
-            document.getElementById(idTrx).innerText = `${data.length} Transaksi`;
+            document.getElementById('omzet-hari').innerText = 'Rp ' + dHari.reduce((a,b)=>a+b.total_bayar,0).toLocaleString('id-ID');
+            document.getElementById('omzet-bulan').innerText = 'Rp ' + dBulan.reduce((a,b)=>a+b.total_bayar,0).toLocaleString('id-ID');
+            document.getElementById('omzet-tahun').innerText = 'Rp ' + dTahun.reduce((a,b)=>a+b.total_bayar,0).toLocaleString('id-ID');
         }
 
         function renderTable(filter) {
-            const tbody = document.getElementById('tabel-body');
-            tbody.innerHTML = '';
+            const tbody = document.getElementById('tabel-body'); tbody.innerHTML = '';
             const now = new Date();
             let filtered = [];
 
-            if(filter === 'hari') filtered = allData.filter(d => new Date(d.created_at).toDateString() === now.toDateString());
-            else if(filter === 'bulan') filtered = allData.filter(d => new Date(d.created_at).getMonth() === now.getMonth());
+            if (filter === 'hari') filtered = allData.filter(d => new Date(d.created_at).toDateString() === now.toDateString());
+            else if (filter === 'bulan') filtered = allData.filter(d => {const t=new Date(d.created_at); return t.getMonth()===now.getMonth() && t.getFullYear()===now.getFullYear()});
             else filtered = allData;
 
-            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-400">Tidak ada data.</td></tr>`; return; }
+            if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400">Kosong.</td></tr>`; return; }
 
-            tbody.innerHTML = filtered.map(d => `
-                <tr class="border-b hover:bg-gray-50 transition">
-                    <td class="p-4 text-xs font-mono text-gray-500">${new Date(d.created_at).toLocaleString()}</td>
-                    <td class="p-4 font-bold text-gray-700">Meja ${d.no_meja}<br><span class="text-xs font-normal text-gray-500">${d.nama_konsumen}</span></td>
-                    <td class="p-4"><pre class="text-xs text-gray-600 font-sans whitespace-pre-wrap">${d.catatan}</pre></td>
-                    <td class="p-4 text-right font-bold text-gray-800">${formatRupiah(d.total_bayar)}</td>
-                    <td class="p-4 text-center">
-                        ${d.di_arsip ? '<span class="text-xs bg-gray-200 px-2 py-1 rounded text-gray-600">Arsip</span>' : '<span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded font-bold">Aktif</span>'}
-                    </td>
+            tbody.innerHTML = filtered.map(item => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-4 text-gray-500">${new Date(item.created_at).toLocaleString('id-ID')}</td>
+                    <td class="p-4"><b>Meja ${item.no_meja}</b> (${item.nama_konsumen})<br><span class="text-xs text-gray-500">${item.catatan.substring(0,50)}...</span></td>
+                    <td class="p-4">${item.metode_bayar==='qr'?'<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">QRIS</span>':'<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold">TUNAI</span>'}</td>
+                    <td class="p-4 text-right font-bold">Rp ${parseInt(item.total_bayar).toLocaleString('id-ID')}</td>
                 </tr>
             `).join('');
         }
-
-        function formatRupiah(n) { return 'Rp ' + parseInt(n).toLocaleString('id-ID'); }
+        init();
     </script>
 </body>
 </html>
