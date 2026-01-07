@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OWNER DASHBOARD SENARAI</title>
+    <title>OWNER DASHBOARD (PRO)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -50,7 +50,7 @@
             
             <div class="bg-white p-4 rounded-xl shadow-sm mb-6 border border-gray-200">
                 <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-file-csv text-green-600"></i> DOWNLOAD LAPORAN (CSV)
+                    <i class="fa-solid fa-file-csv text-green-600"></i> DOWNLOAD LAPORAN (EXCEL/CSV)
                 </h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <button onclick="downloadCSV('hari')" class="bg-green-100 text-green-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-green-200 border border-green-200 flex items-center justify-center gap-2">
@@ -177,7 +177,6 @@
 
         // --- 1. LOGIKA LAPORAN ---
         async function initLaporan() {
-            // Ambil semua data LUNAS
             const { data } = await client.from('pesanan')
                 .select('*')
                 .eq('status_bayar', 'lunas')
@@ -185,7 +184,6 @@
             
             allTransactions = data || [];
             
-            // Hitung Ringkasan
             const now = new Date();
             const dHari = allTransactions.filter(d => new Date(d.created_at).toDateString() === now.toDateString());
             const dBulan = allTransactions.filter(d => new Date(d.created_at).getMonth() === now.getMonth() && new Date(d.created_at).getFullYear() === now.getFullYear());
@@ -214,7 +212,7 @@
             `).join('');
         }
 
-        // --- 2. LOGIKA DOWNLOAD CSV ---
+        // --- 2. LOGIKA DOWNLOAD CSV (DIPERBAIKI UNTUK EXCEL INDONESIA) ---
         function downloadCSV(periode) {
             if(allTransactions.length === 0) return Swal.fire('Kosong', 'Belum ada data untuk didownload', 'info');
             
@@ -235,13 +233,25 @@
 
             if(filteredData.length === 0) return Swal.fire('Info', 'Tidak ada data pada periode ini.', 'info');
 
-            // Format CSV
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "WAKTU,MEJA,KONSUMEN,METODE,TOTAL,CATATAN\n"; // Header
+            // --- PERBAIKAN: GUNAKAN TITIK KOMA (;) DAN BOM UNTUK EXCEL INDO ---
+            // \uFEFF adalah BOM (Byte Order Mark) agar Excel mendeteksi encoding UTF-8 dengan benar
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+            csvContent += "WAKTU;MEJA;KONSUMEN;METODE;TOTAL;CATATAN\n"; // Header pakai ;
 
             filteredData.forEach(row => {
-                let cleanCatatan = (row.catatan || '').replace(/(\r\n|\n|\r)/gm, " | ");
-                let rowStr = `${new Date(row.created_at).toLocaleString('id-ID')},${row.no_meja},${row.nama_konsumen},${row.metode_bayar},${row.total_bayar},"${cleanCatatan}"`;
+                // Bersihkan enter di catatan dan ganti titik koma di dalam teks (jika ada) menjadi koma biasa agar tidak merusak kolom
+                let cleanCatatan = (row.catatan || '').replace(/(\r\n|\n|\r)/gm, " | ").replace(/;/g, ",");
+                
+                // Susun Data dengan pemisah titik koma (;)
+                let rowStr = [
+                    `"${new Date(row.created_at).toLocaleString('id-ID')}"`,
+                    `"${row.no_meja}"`,
+                    `"${row.nama_konsumen}"`,
+                    `"${row.metode_bayar}"`,
+                    `"${row.total_bayar}"`,
+                    `"${cleanCatatan}"`
+                ].join(";");
+
                 csvContent += rowStr + "\n";
             });
 
@@ -268,7 +278,6 @@
             });
 
             if (konfirmasi === 'KONFIRMASI') {
-                // Trik menghapus semua data (neq id 0)
                 const { error } = await client.from('pesanan').delete().neq('id', 0);
                 
                 if (error) {
@@ -323,7 +332,6 @@
                 tersedia: true
             }]);
             
-            // Reset Form
             document.getElementById('nama-menu').value = ''; 
             document.getElementById('harga-menu').value = '';
             document.getElementById('gambar-menu').value = '';
@@ -352,7 +360,6 @@
             initMenu();
         }
 
-        // Jalankan saat load
         initLaporan();
     </script>
 </body>
