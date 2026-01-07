@@ -211,58 +211,74 @@
                 </tr>
             `).join('');
         }
+<script>
+async function downloadCSV(periode) {
 
-        // --- 2. LOGIKA DOWNLOAD CSV (DIPERBAIKI UNTUK EXCEL INDONESIA) ---
-        function downloadCSV(periode) {
-            if(allTransactions.length === 0) return Swal.fire('Kosong', 'Belum ada data untuk didownload', 'info');
-            
-            const now = new Date();
-            let filteredData = [];
-            let filename = `Laporan_Cafe_${periode}_${now.getTime()}.csv`;
+    let startDate, endDate;
+    const now = new Date();
 
-            if(periode === 'hari') {
-                filteredData = allTransactions.filter(d => new Date(d.created_at).toDateString() === now.toDateString());
-            } else if(periode === 'minggu') {
-                const lastWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-                filteredData = allTransactions.filter(d => new Date(d.created_at) >= lastWeek);
-            } else if(periode === 'bulan') {
-                filteredData = allTransactions.filter(d => new Date(d.created_at).getMonth() === now.getMonth() && new Date(d.created_at).getFullYear() === now.getFullYear());
-            } else if(periode === 'tahun') {
-                filteredData = allTransactions.filter(d => new Date(d.created_at).getFullYear() === now.getFullYear());
-            }
+    if (periode === 'hari') {
+        startDate = new Date(now.setHours(0,0,0,0));
+        endDate   = new Date(now.setHours(23,59,59,999));
+    }
+    else if (periode === 'minggu') {
+        endDate   = new Date();
+        startDate = new Date();
+        startDate.setDate(endDate.getDate() - 7);
+    }
+    else if (periode === 'bulan') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23,59,59);
+    }
+    else if (periode === 'tahun') {
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate   = new Date(now.getFullYear(), 11, 31, 23,59,59);
+    }
 
-            if(filteredData.length === 0) return Swal.fire('Info', 'Tidak ada data pada periode ini.', 'info');
+    const { data, error } = await client
+        .from('pesanan')
+        .select('*')
+        .eq('status_bayar', 'lunas')
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString())
+        .order('created_at', { ascending: true });
 
-            // --- PERBAIKAN: GUNAKAN TITIK KOMA (;) DAN BOM UNTUK EXCEL INDO ---
-            // \uFEFF adalah BOM (Byte Order Mark) agar Excel mendeteksi encoding UTF-8 dengan benar
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
-            csvContent += "WAKTU;MEJA;KONSUMEN;METODE;TOTAL;CATATAN\n"; // Header pakai ;
+    if (error || !data || data.length === 0) {
+        return Swal.fire('Kosong', 'Tidak ada data pada periode ini', 'info');
+    }
 
-            filteredData.forEach(row => {
-                // Bersihkan enter di catatan dan ganti titik koma di dalam teks (jika ada) menjadi koma biasa agar tidak merusak kolom
-                let cleanCatatan = (row.catatan || '').replace(/(\r\n|\n|\r)/gm, " | ").replace(/;/g, ",");
-                
-                // Susun Data dengan pemisah titik koma (;)
-                let rowStr = [
-                    `"${new Date(row.created_at).toLocaleString('id-ID')}"`,
-                    `"${row.no_meja}"`,
-                    `"${row.nama_konsumen}"`,
-                    `"${row.metode_bayar}"`,
-                    `"${row.total_bayar}"`,
-                    `"${cleanCatatan}"`
-                ].join(";");
+    let totalOmzet = 0;
 
-                csvContent += rowStr + "\n";
-            });
+    // BOM UTF-8 + delimiter ;
+    let csv = "data:text/csv;charset=utf-8,\uFEFF";
+    csv += "WAKTU;MEJA;KONSUMEN;METODE BAYAR;TOTAL BAYAR;CATATAN\n";
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+    data.forEach(d => {
+        totalOmzet += Number(d.total_bayar);
+
+        csv += [
+            `"${new Date(d.created_at).toLocaleString('id-ID')}"`,
+            `"${d.no_meja}"`,
+            `"${d.nama_konsumen}"`,
+            `"${d.metode_bayar === 'qr' ? 'QRIS' : 'TUNAI'}"`,
+            `"${d.total_bayar}"`,
+            `"${(d.catatan || '').replace(/(\r\n|\n|\r)/gm,' | ')}"`
+        ].join(";") + "\n";
+    });
+
+    // Baris rekap (penting untuk laporan keuangan)
+    csv += "\n";
+    csv += `;;;;TOTAL OMZET;"${totalOmzet}"\n`;
+
+    const link = document.createElement("a");
+    link.href = encodeURI(csv);
+    link.download = `Laporan_${periode}_${Date.now()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+
 
         // --- 3. LOGIKA HAPUS SEMUA RIWAYAT (DANGER) ---
         async function hapusSemuaRiwayat() {
@@ -364,3 +380,4 @@
     </script>
 </body>
 </html>
+
