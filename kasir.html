@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASIR MONITOR (SECURE)</title>
+    <title>KASIR MONITOR (RAWBT)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @keyframes kedip { 0% { border-color: red; } 50% { border-color: yellow; } 100% { border-color: red; } }
+        @keyframes kedip { 0% { border-color: #ef4444; } 50% { border-color: #eab308; } 100% { border-color: #ef4444; } }
         .pesanan-baru { animation: kedip 1.5s infinite; border-width: 2px; }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
+<body class="bg-gray-900 text-white min-h-screen font-sans">
 
     <script>
-        // Cek apakah punya tiket masuk sebagai 'kasir_valid'
         if (sessionStorage.getItem('role') !== 'kasir_valid') {
             alert("ANDA BELUM LOGIN! SILAKAN LOGIN DULU.");
             window.location.href = 'login.html'; // TENDANG KELUAR
@@ -25,37 +24,63 @@
 
     <div id="overlay-start" class="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center cursor-pointer" onclick="mulaiAplikasi()">
         <div class="text-6xl mb-4 animate-bounce">👆</div>
-        <h1 class="text-3xl font-bold text-green-400">KLIK UNTUK MULAI</h1>
+        <h1 class="text-3xl font-bold text-green-400">KLIK UNTUK BUKA KASIR</h1>
+        <p class="text-gray-400 mt-2">Mode: RawBT Printer</p>
     </div>
 
-    <nav class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center sticky top-0 z-40">
-        <div class="flex items-center gap-2"><span class="text-2xl">🖥️</span><h1 class="font-bold">KASIR AREA</h1></div>
+    <nav class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center sticky top-0 z-40 shadow-lg">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🖨️</span>
+            <div>
+                <h1 class="text-xl font-bold tracking-wider">KASIR MONITOR</h1>
+                <p class="text-[10px] text-gray-400">Versi RawBT (Stabil)</p>
+            </div>
+        </div>
+        
         <div class="flex gap-2">
-            <button onclick="logout()" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs">LOGOUT</button>
-            <button onclick="tutupToko()" class="bg-red-600 hover:bg-red-500 px-3 py-1 rounded text-xs font-bold">TUTUP TOKO</button>
+            <button onclick="tutupToko()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 shadow-lg">
+                <i class="fa-solid fa-store-slash"></i> TUTUP TOKO
+            </button>
+            <button onclick="logout()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-600">
+                LOGOUT
+            </button>
         </div>
     </nav>
 
     <div class="p-6 max-w-7xl mx-auto">
         <div class="grid grid-cols-2 gap-6 mb-8">
-            <div onclick="gantiFilter('pending')" class="bg-gray-800 p-6 rounded-2xl border border-gray-700 cursor-pointer hover:border-yellow-500">
-                <h3 class="text-gray-400 text-xs font-bold uppercase">Pesanan Masuk</h3>
-                <p id="count-pending" class="text-5xl font-black">0</p>
+            <div onclick="gantiFilter('pending')" class="bg-gray-800 p-6 rounded-2xl border border-gray-700 cursor-pointer hover:border-yellow-500 transition shadow-lg relative overflow-hidden">
+                <h3 class="text-gray-400 font-bold uppercase text-xs tracking-widest mb-1">Pesanan Masuk</h3>
+                <p id="count-pending" class="text-5xl font-black text-white">0</p>
+                <div class="absolute right-0 top-0 p-4 opacity-10 text-yellow-500"><i class="fa-solid fa-bell text-6xl"></i></div>
             </div>
-            <div onclick="gantiFilter('lunas')" class="bg-gray-800 p-6 rounded-2xl border border-gray-700 cursor-pointer hover:border-green-500">
-                <h3 class="text-gray-400 text-xs font-bold uppercase">Selesai</h3>
-                <p id="count-lunas" class="text-5xl font-black">0</p>
+            <div onclick="gantiFilter('lunas')" class="bg-gray-800 p-6 rounded-2xl border border-gray-700 cursor-pointer hover:border-green-500 transition shadow-lg relative overflow-hidden">
+                <h3 class="text-gray-400 font-bold uppercase text-xs tracking-widest mb-1">Selesai / Lunas</h3>
+                <p id="count-lunas" class="text-5xl font-black text-white">0</p>
+                <div class="absolute right-0 top-0 p-4 opacity-10 text-green-500"><i class="fa-solid fa-check-double text-6xl"></i></div>
             </div>
         </div>
-        <h2 id="judul-list" class="text-2xl font-bold text-yellow-400 mb-4 border-b border-gray-700 pb-2">ANTRIAN</h2>
-        <div id="grid-pesanan" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+        <div class="flex items-center gap-4 mb-6 border-b border-gray-700 pb-2">
+            <h2 id="judul-list" class="text-2xl font-bold text-yellow-400">DAFTAR ANTRIAN</h2>
+            <div id="status-koneksi" class="ml-auto text-xs px-3 py-1 rounded-full bg-gray-700 text-gray-300 flex items-center gap-2">Connecting...</div>
+        </div>
+
+        <div id="grid-pesanan" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-20 text-gray-600 bg-gray-800/50 rounded-2xl border border-gray-700 border-dashed">Menunggu Data...</div>
+        </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; 
+        
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let audioNotif = new Audio('notif.wav'); let dataPesanan = []; let filterStatus = 'pending';
+        let audioNotif = new Audio('notif.wav'); 
+        let dataPesanan = [];
+        let filterStatus = 'pending'; 
+
+        // --- SYSTEM ---
 
         function logout() {
             sessionStorage.removeItem('role');
@@ -64,80 +89,229 @@
 
         function mulaiAplikasi() {
             document.getElementById('overlay-start').style.display = 'none';
-            audioNotif.play().then(()=>{audioNotif.pause(); audioNotif.currentTime=0}).catch(e=>{});
+            audioNotif.play().then(() => { audioNotif.pause(); audioNotif.currentTime = 0; }).catch(e=>{});
             ambilData();
         }
 
         async function ambilData() {
-            const { data, error } = await client.from('pesanan').select('*').eq('di_arsip', false).order('created_at', { ascending: false });
-            if(!error) { dataPesanan = data || []; renderLayar(); }
+            const statusEl = document.getElementById('status-koneksi');
+            
+            // Hanya ambil data yang BELUM diarsip (belum tutup toko)
+            const { data, error } = await client
+                .from('pesanan')
+                .select('*')
+                .eq('di_arsip', false) 
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Error DB:", error);
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-exclamation text-red-500"></i> Error`;
+            } else {
+                dataPesanan = data || [];
+                renderLayar();
+                statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500"></span> Online`;
+            }
         }
 
         function renderLayar() {
             const pending = dataPesanan.filter(x => x.status_bayar === 'pending');
             const lunas = dataPesanan.filter(x => x.status_bayar !== 'pending');
+            
             document.getElementById('count-pending').innerText = pending.length;
             document.getElementById('count-lunas').innerText = lunas.length;
+
             const listTampil = filterStatus === 'pending' ? pending : lunas;
             const container = document.getElementById('grid-pesanan');
 
-            if (listTampil.length === 0) { container.innerHTML = `<div class="col-span-full text-center py-20 text-gray-500">Tidak ada data.</div>`; return; }
+            if (listTampil.length === 0) {
+                container.innerHTML = `
+                <div class="col-span-full text-center py-20 text-gray-500 bg-gray-800/30 rounded-2xl border border-gray-700 border-dashed">
+                    <i class="fa-regular fa-folder-open text-4xl mb-4 opacity-50"></i>
+                    <p>Tidak ada pesanan ${filterStatus}.</p>
+                </div>`;
+                return;
+            }
 
             container.innerHTML = listTampil.map(o => {
-                const badge = o.metode_bayar==='qr' ? '<span class="bg-blue-900 text-blue-200 px-2 py-1 text-xs rounded">QRIS</span>' : '<span class="bg-orange-900 text-orange-200 px-2 py-1 text-xs rounded">TUNAI</span>';
-                const safeCatatan = (o.catatan||'').replace(/\n/g,'\\n').replace(/'/g,"\\'");
-                
+                const labelMetode = o.metode_bayar === 'qr' 
+                    ? `<span class="bg-blue-600/20 text-blue-400 border border-blue-600/50 text-[10px] px-2 py-1 rounded font-bold uppercase"><i class="fa-solid fa-qrcode mr-1"></i> QRIS</span>`
+                    : `<span class="bg-orange-600/20 text-orange-400 border border-orange-600/50 text-[10px] px-2 py-1 rounded font-bold uppercase"><i class="fa-solid fa-money-bill-wave mr-1"></i> TUNAI</span>`;
+
+                const safeCatatan = (o.catatan || '').replace(/\n/g, '\\n').replace(/'/g, "\\'");
+                const safeNama = (o.nama_konsumen || 'Tanpa Nama').replace(/'/g, "\\'");
+                const waktu = new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+
                 return `
-                <div class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 ${o.status_bayar==='pending'?'pesanan-baru':''}">
-                    <div class="p-4 bg-gray-700/50 flex justify-between items-start">
-                        <div><h3 class="text-2xl font-bold">Meja ${o.no_meja}</h3><p class="text-sm text-gray-300">👤 ${o.nama_konsumen||'-'}</p></div>
-                        <div class="text-right"><span class="text-xs text-gray-400 block mb-1">${new Date(o.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span>${badge}</div>
+                <div class="bg-gray-800 rounded-2xl overflow-hidden shadow-xl border border-gray-700 flex flex-col hover:border-gray-600 transition ${o.status_bayar==='pending' ? 'pesanan-baru' : ''}">
+                    
+                    <div class="p-5 ${o.status_bayar==='pending' ? 'bg-gradient-to-r from-yellow-900/40 to-gray-800' : 'bg-gradient-to-r from-green-900/40 to-gray-800'} flex justify-between items-start border-b border-gray-700">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xs text-gray-400 font-mono">${waktu}</span>
+                                ${labelMetode}
+                            </div>
+                            <h3 class="text-2xl font-black text-white leading-none">Meja ${o.no_meja}</h3>
+                            <p class="text-gray-300 text-sm mt-1 font-medium"><i class="fa-regular fa-user mr-1 text-gray-500"></i> ${o.nama_konsumen || '-'}</p>
+                        </div>
                     </div>
-                    <div class="p-4 bg-gray-800/50 border-t border-b border-gray-700"><pre class="whitespace-pre-wrap font-mono text-sm text-gray-300">${o.catatan}</pre></div>
-                    <div class="p-4 bg-gray-900 flex justify-between items-center">
-                        <div><p class="text-xs text-gray-500">Total</p><p class="text-xl font-bold">Rp ${parseInt(o.total_bayar).toLocaleString('id-ID')}</p></div>
-                        ${o.status_bayar==='pending' ? 
-                        `<div class="flex gap-2">
-                            <button onclick="hapus(${o.id})" class="bg-red-900 text-red-200 px-3 py-2 rounded">🗑️</button>
-                            <button onclick="cek(${o.id},'${o.nama_konsumen}',${o.total_bayar},'${o.metode_bayar}','${o.bukti_url}')" class="bg-blue-600 px-4 py-2 rounded font-bold">${o.metode_bayar==='qr'?'CEK BUKTI':'TERIMA'}</button>
-                        </div>` : 
-                        `<button onclick="print('${o.no_meja}','${o.nama_konsumen}','${safeCatatan}',${o.total_bayar},'${o.created_at}')" class="bg-gray-700 px-4 py-2 rounded border border-gray-600">🖨️ PRINT</button>`}
+                    
+                    <div class="p-5 flex-grow bg-gray-800/50">
+                        <div class="bg-gray-900/50 p-3 rounded-xl border border-gray-700/50 min-h-[80px]">
+                            <pre class="whitespace-pre-wrap font-mono text-gray-300 text-sm leading-relaxed">${o.catatan}</pre>
+                        </div>
                     </div>
-                </div>`;
-            }).join('');
+
+                    <div class="p-4 bg-gray-900 border-t border-gray-700">
+                        <div class="flex justify-between items-end mb-4">
+                            <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">Total Tagihan</span>
+                            <span class="text-xl font-black text-white">Rp ${parseInt(o.total_bayar).toLocaleString('id-ID')}</span>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                        ${o.status_bayar === 'pending' ? 
+                            `
+                            <button onclick="hapusPesanan(${o.id})" class="bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 w-12 h-12 rounded-xl flex items-center justify-center border border-red-500/50 transition" title="Hapus">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                            <button onclick="cekPembayaran(${o.id}, '${safeNama}', ${o.total_bayar}, '${o.metode_bayar}', '${o.bukti_url}')" 
+                               class="flex-grow bg-blue-600 hover:bg-blue-500 text-white h-12 rounded-xl font-bold shadow-lg shadow-blue-900/20 transition flex items-center justify-center gap-2">
+                                ${o.metode_bayar === 'qr' ? '<i class="fa-solid fa-camera"></i> CEK BUKTI' : '<i class="fa-solid fa-hand-holding-dollar"></i> TERIMA UANG'}
+                            </button>
+                            ` 
+                            : 
+                            `
+                            <button onclick="printStruk('${o.no_meja}', '${safeNama}', '${safeCatatan}', ${o.total_bayar}, '${o.created_at}')" 
+                                class="flex-grow bg-gray-700 hover:bg-gray-600 text-white h-12 rounded-xl border border-gray-600 font-bold flex items-center justify-center gap-2 transition shadow-lg">
+                                <i class="fa-solid fa-print"></i> PRINT STRUK (RawBT)
+                            </button>
+                            <span class="text-green-500 font-bold border border-green-500/30 px-3 py-1 rounded bg-green-900/20 flex items-center">LUNAS</span>
+                            `
+                        }
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
         }
 
-        async function hapus(id) {
-            if(confirm("Hapus pesanan ini?")) { await client.from('pesanan').delete().eq('id', id); ambilData(); }
+        // --- FUNGSI PRINT (RAWBT VERSION) ---
+        function printStruk(meja, nama, items, total, tanggal) {
+            let tgl = new Date(tanggal).toLocaleString('id-ID');
+            let rupiah = parseInt(total).toLocaleString('id-ID');
+
+            // Format ESC/POS
+            let struk = "";
+            struk += "\x1b\x40"; // Init
+            struk += "\x1b\x61\x01"; // Center Align
+            struk += "\x1b\x21\x30"; // Double Size Text
+            struk += "CAFE ANDA\n"; // GANTI NAMA CAFE DISINI
+            struk += "\x1b\x21\x00"; // Normal Text
+            struk += "Jl. Contoh No. 123\n"; 
+            struk += "--------------------------------\n";
+            
+            struk += "\x1b\x61\x00"; // Left Align
+            struk += `Meja : ${meja}\n`;
+            struk += `Nama : ${nama}\n`;
+            struk += `Tgl  : ${tgl}\n`;
+            struk += "--------------------------------\n";
+            
+            struk += items + "\n";
+            
+            struk += "--------------------------------\n";
+            struk += "\x1b\x61\x02"; // Right Align
+            struk += "\x1b\x21\x10"; // Double Height
+            struk += `TOTAL: Rp ${rupiah}\n`;
+            struk += "\x1b\x21\x00"; // Normal
+            
+            struk += "--------------------------------\n";
+            struk += "\x1b\x61\x01"; // Center Align
+            struk += "Terima Kasih\n";
+            struk += "\n\n\n"; // Feed paper
+
+            // PANGGIL APLIKASI RAWBT
+            window.location.href = "rawbt:data=" + encodeURIComponent(struk);
         }
-        
-        async function cek(id, nama, total, method, url) {
-            let rp = parseInt(total).toLocaleString('id-ID');
-            if(method==='qr') {
-                if(!url) return Swal.fire('Info','Belum ada bukti upload','info');
-                Swal.fire({title:'BUKTI TRANSFER', text:`Rp ${rp} (a.n ${nama})`, imageUrl:url, imageHeight:400, showCancelButton:true, confirmButtonText:'✅ VALID'}).then(r=>{if(r.isConfirmed) lunas(id)});
-            } else {
-                Swal.fire({title:'TERIMA TUNAI', text:`Terima Rp ${rp} dari ${nama}?`, icon:'question', showCancelButton:true, confirmButtonText:'YA'}).then(r=>{if(r.isConfirmed) lunas(id)});
+
+        // --- HAPUS PESANAN ---
+        async function hapusPesanan(id) {
+            const result = await Swal.fire({
+                title: 'Hapus Pesanan?',
+                text: "Data akan hilang permanen dari database.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Ya, Hapus!',
+                background: '#1f2937', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                await client.from('pesanan').delete().eq('id', id);
+                ambilData(); 
+                Swal.fire({ title: 'Terhapus', icon: 'success', timer: 1000, showConfirmButton: false, background: '#1f2937', color: '#fff' });
             }
         }
 
-        async function lunas(id) { await client.from('pesanan').update({status_bayar:'lunas'}).eq('id',id); ambilData(); }
+        // --- TUTUP TOKO (ARSIP) ---
         async function tutupToko() {
-            if(confirm("Tutup toko? Semua data hari ini akan diarsip.")) {
-                await client.from('pesanan').update({di_arsip:true}).eq('di_arsip',false);
-                ambilData();
+            const result = await Swal.fire({
+                title: 'Tutup Toko Hari Ini?',
+                text: "Layar kasir akan dibersihkan. Data pesanan hari ini disimpan ke arsip Owner.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Ya, Tutup!',
+                background: '#1f2937', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                const { error } = await client.from('pesanan').update({ di_arsip: true }).eq('di_arsip', false);
+                if (!error) {
+                    ambilData();
+                    Swal.fire({ title: 'Toko Ditutup', text: 'Sampai jumpa besok!', icon: 'success', background: '#1f2937', color: '#fff' });
+                }
             }
         }
-        function gantiFilter(s) { filterStatus=s; document.getElementById('judul-list').innerText=s==='pending'?'ANTRIAN':'RIWAYAT'; ambilData(); }
-        function print(m,n,i,t,d) {
-            let s=`\x1b\x40\x1b\x61\x01\x1b\x21\x30CAFE\n\x1b\x21\x00----------------\nMeja: ${m}\nNama: ${n}\nTgl: ${new Date(d).toLocaleString('id-ID')}\n----------------\n${i}\n----------------\nTOTAL: Rp ${parseInt(t).toLocaleString('id-ID')}\n----------------\nTerima Kasih\n\n\n`;
-            window.location.href="rawbt:data="+encodeURIComponent(s);
+
+        // --- CEK PEMBAYARAN ---
+        async function cekPembayaran(id, nama, total, metode, buktiUrl) {
+            let rupiah = parseInt(total).toLocaleString('id-ID');
+            if (metode === 'qr') {
+                if(!buktiUrl) { Swal.fire({icon:'info', title:'Belum ada bukti', background:'#1f2937', color:'#fff'}); return; }
+                const result = await Swal.fire({
+                    title: 'CEK BUKTI TRANSFER', text: `Tagihan: Rp ${rupiah}`, imageUrl: buktiUrl, imageHeight: 400,
+                    showCancelButton: true, confirmButtonText: '✅ SAH (LUNAS)', confirmButtonColor: '#10B981', background: '#1f2937', color: '#fff'
+                });
+                if (result.isConfirmed) updateLunas(id);
+            } else {
+                const result = await Swal.fire({
+                    title: 'TERIMA TUNAI', text: `Terima uang Rp ${rupiah} dari ${nama}?`, icon: 'question',
+                    showCancelButton: true, confirmButtonText: 'YA, TERIMA', confirmButtonColor: '#10B981', background: '#1f2937', color: '#fff'
+                });
+                if (result.isConfirmed) updateLunas(id);
+            }
         }
 
-        client.channel('public:pesanan').on('postgres_changes', {event:'*', schema:'public', table:'pesanan'}, p=>{
-            if(p.eventType==='INSERT') { audioNotif.play().catch(e=>{}); Swal.fire({title:'PESANAN MASUK', timer:2000, showConfirmButton:false, icon:'success'}); }
+        async function updateLunas(id) {
+            await client.from('pesanan').update({ status_bayar: 'lunas' }).eq('id', id);
+            ambilData();
+        }
+
+        function gantiFilter(status) {
+            filterStatus = status;
+            document.getElementById('judul-list').innerText = status === 'pending' ? "DAFTAR ANTRIAN" : "RIWAYAT SELESAI";
+            const judul = document.getElementById('judul-list');
+            judul.className = status === 'pending' ? "text-2xl font-bold text-yellow-400" : "text-2xl font-bold text-green-400";
+            ambilData();
+        }
+
+        // --- REALTIME ---
+        client.channel('public:pesanan').on('postgres_changes', { event: '*', schema: 'public', table: 'pesanan' }, (payload) => {
+            if (payload.eventType === 'INSERT') {
+                audioNotif.play().catch(e=>{});
+                Swal.fire({ title: 'PESANAN MASUK!', text: `Meja ${payload.new.no_meja}`, icon: 'success', timer: 3000, showConfirmButton: false, background: '#1f2937', color: '#fff' });
+            }
             ambilData();
         }).subscribe();
+
     </script>
 </body>
 </html>
