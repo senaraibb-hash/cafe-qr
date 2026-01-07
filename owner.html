@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OWNER DASHBOARD (PRO)</title>
+    <title>OWNER DASHBOARD (SMART)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -13,7 +13,7 @@
 
     <script>
         if (sessionStorage.getItem('role') !== 'owner_valid') {
-            alert("AKSES DITOLAK: KHUSUS OWNER! SILAKAN LOGIN.");
+            alert("AKSES DITOLAK: KHUSUS OWNER!");
             window.location.href = 'login.html';
         }
     </script>
@@ -27,44 +27,27 @@
                     <p class="text-[10px] text-blue-200">Laporan & Manajemen Menu</p>
                 </div>
             </div>
-            <button onclick="logout()" class="bg-red-500 hover:bg-red-400 px-4 py-2 rounded text-sm font-bold shadow transition">
-                LOGOUT
-            </button>
+            <button onclick="logout()" class="bg-red-500 hover:bg-red-400 px-4 py-2 rounded text-sm font-bold shadow transition">LOGOUT</button>
         </div>
     </nav>
 
     <div class="bg-white shadow-sm border-b">
         <div class="max-w-7xl mx-auto flex">
-            <button onclick="gantiTab('laporan')" id="tab-laporan" class="flex-1 py-4 font-bold text-blue-900 border-b-4 border-blue-900 bg-blue-50 transition">
-                <i class="fa-solid fa-chart-line mr-2"></i> LAPORAN KEUANGAN
-            </button>
-            <button onclick="gantiTab('menu')" id="tab-menu" class="flex-1 py-4 font-bold text-gray-500 hover:bg-gray-50 transition">
-                <i class="fa-solid fa-utensils mr-2"></i> KELOLA MENU
-            </button>
+            <button onclick="gantiTab('laporan')" id="tab-laporan" class="flex-1 py-4 font-bold text-blue-900 border-b-4 border-blue-900 bg-blue-50 transition"><i class="fa-solid fa-chart-line mr-2"></i> LAPORAN KEUANGAN</button>
+            <button onclick="gantiTab('menu')" id="tab-menu" class="flex-1 py-4 font-bold text-gray-500 hover:bg-gray-50 transition"><i class="fa-solid fa-utensils mr-2"></i> KELOLA MENU</button>
         </div>
     </div>
 
     <div class="max-w-7xl mx-auto p-6">
 
         <div id="view-laporan">
-            
             <div class="bg-white p-4 rounded-xl shadow-sm mb-6 border border-gray-200">
-                <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-file-csv text-green-600"></i> DOWNLOAD LAPORAN (EXCEL/CSV)
-                </h3>
+                <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-file-excel text-green-600"></i> DOWNLOAD LAPORAN (SMART FILTER)</h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <button onclick="downloadCSV('hari')" class="bg-green-100 text-green-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-green-200 border border-green-200 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-download"></i> Harian
-                    </button>
-                    <button onclick="downloadCSV('minggu')" class="bg-blue-100 text-blue-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-blue-200 border border-blue-200 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-download"></i> Mingguan
-                    </button>
-                    <button onclick="downloadCSV('bulan')" class="bg-indigo-100 text-indigo-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-indigo-200 border border-indigo-200 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-download"></i> Bulanan
-                    </button>
-                    <button onclick="downloadCSV('tahun')" class="bg-purple-100 text-purple-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-purple-200 border border-purple-200 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-download"></i> Tahunan
-                    </button>
+                    <button onclick="downloadCSV('hari')" class="bg-green-100 text-green-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-green-200 border border-green-200 flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> Harian</button>
+                    <button onclick="downloadCSV('minggu')" class="bg-blue-100 text-blue-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-blue-200 border border-blue-200 flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> Mingguan</button>
+                    <button onclick="downloadCSV('bulan')" class="bg-indigo-100 text-indigo-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-indigo-200 border border-indigo-200 flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> Bulanan</button>
+                    <button onclick="downloadCSV('tahun')" class="bg-purple-100 text-purple-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-purple-200 border border-purple-200 flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> Tahunan</button>
                 </div>
             </div>
 
@@ -86,9 +69,7 @@
             <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-10">
                 <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
                     <h2 class="font-bold text-gray-700">RIWAYAT PESANAN (LUNAS)</h2>
-                    <button onclick="initLaporan()" class="text-sm text-blue-600 hover:underline">
-                        <i class="fa-solid fa-sync"></i> Refresh
-                    </button>
+                    <button onclick="initLaporan()" class="text-sm text-blue-600 hover:underline"><i class="fa-solid fa-sync"></i> Refresh</button>
                 </div>
                 <div class="overflow-x-auto max-h-[400px]">
                     <table class="w-full text-left border-collapse text-sm">
@@ -100,28 +81,21 @@
                                 <th class="p-4 border-b text-right">Total</th>
                             </tr>
                         </thead>
-                        <tbody id="tabel-laporan">
-                            <tr><td colspan="4" class="p-8 text-center">Loading...</td></tr>
-                        </tbody>
+                        <tbody id="tabel-laporan"><tr><td colspan="4" class="p-8 text-center">Loading...</td></tr></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
                 <h3 class="text-red-700 font-bold mb-2"><i class="fa-solid fa-triangle-exclamation"></i> DANGER ZONE</h3>
-                <p class="text-red-500 text-sm mb-4">Menghapus riwayat bersifat PERMANEN. Data penjualan akan hilang selamanya.</p>
-                <button onclick="hapusSemuaRiwayat()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow transition">
-                    HAPUS SEMUA RIWAYAT TRANSAKSI
-                </button>
+                <button onclick="hapusSemuaRiwayat()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow transition">HAPUS SEMUA RIWAYAT</button>
             </div>
             <br><br>
         </div>
 
         <div id="view-menu" class="hidden">
             <div class="bg-white p-6 rounded-xl shadow-md mb-8 border border-gray-200">
-                <h3 class="font-bold text-lg mb-4 text-gray-700 flex items-center gap-2">
-                    <i class="fa-solid fa-plus-circle text-green-600"></i> TAMBAH MENU
-                </h3>
+                <h3 class="font-bold text-lg mb-4 text-gray-700 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-green-600"></i> TAMBAH MENU</h3>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <input type="text" id="nama-menu" placeholder="Nama Menu" class="p-3 border rounded-lg w-full">
                     <input type="number" id="harga-menu" placeholder="Harga" class="p-3 border rounded-lg w-full">
@@ -132,31 +106,20 @@
                     </select>
                     <input type="text" id="gambar-menu" placeholder="Link Gambar (URL)" class="p-3 border rounded-lg w-full">
                 </div>
-                <button onclick="tambahMenu()" class="mt-4 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow transition">
-                    SIMPAN MENU
-                </button>
+                <button onclick="tambahMenu()" class="mt-4 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow transition">SIMPAN MENU</button>
             </div>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="list-menu"></div>
         </div>
-
     </div>
 
     <script>
-        // --- KONFIGURASI SUPABASE ---
         const SUPABASE_URL = 'https://wythxpljidldaqmrplua.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; 
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        let allTransactions = [];
 
-        // --- NAVIGASI ---
         function gantiTab(tab) {
-            const btnLap = document.getElementById('tab-laporan');
-            const btnMen = document.getElementById('tab-menu');
-            const viewLap = document.getElementById('view-laporan');
-            const viewMen = document.getElementById('view-menu');
-
+            const btnLap = document.getElementById('tab-laporan'); const btnMen = document.getElementById('tab-menu');
+            const viewLap = document.getElementById('view-laporan'); const viewMen = document.getElementById('view-menu');
             if (tab === 'laporan') {
                 viewLap.classList.remove('hidden'); viewMen.classList.add('hidden');
                 btnLap.className = "flex-1 py-4 font-bold text-blue-900 border-b-4 border-blue-900 bg-blue-50 transition";
@@ -169,215 +132,149 @@
                 initMenu();
             }
         }
+        function logout() { sessionStorage.removeItem('role'); window.location.href = 'login.html'; }
 
-        function logout() { 
-            sessionStorage.removeItem('role'); 
-            window.location.href = 'login.html'; 
-        }
-
-        // --- 1. LOGIKA LAPORAN ---
+        // --- DASHBOARD DATA ---
         async function initLaporan() {
-            const { data } = await client.from('pesanan')
-                .select('*')
-                .eq('status_bayar', 'lunas')
-                .order('created_at', { ascending: false });
+            // Ambil data untuk display di web (tetap pakai limit biar ringan, misal 50 terakhir)
+            const { data } = await client.from('pesanan').select('*').eq('status_bayar', 'lunas').order('created_at', { ascending: false }).limit(50);
             
-            allTransactions = data || [];
-            
+            // Hitung ringkasan hari/bulan ini
             const now = new Date();
-            const dHari = allTransactions.filter(d => new Date(d.created_at).toDateString() === now.toDateString());
-            const dBulan = allTransactions.filter(d => new Date(d.created_at).getMonth() === now.getMonth() && new Date(d.created_at).getFullYear() === now.getFullYear());
+            const { data: allData } = await client.from('pesanan').select('total_bayar, created_at').eq('status_bayar', 'lunas'); // Ambil ringkas untuk hitung omzet
             
+            const dHari = allData.filter(d => new Date(d.created_at).toDateString() === now.toDateString());
+            const dBulan = allData.filter(d => new Date(d.created_at).getMonth() === now.getMonth() && new Date(d.created_at).getFullYear() === now.getFullYear());
+            const dYear = allData.filter(d => new Date(d.created_at).getFullYear() === now.getFullYear());
+
             document.getElementById('omzet-hari').innerText = 'Rp ' + dHari.reduce((a,b)=>a+b.total_bayar,0).toLocaleString('id-ID');
             document.getElementById('omzet-bulan').innerText = 'Rp ' + dBulan.reduce((a,b)=>a+b.total_bayar,0).toLocaleString('id-ID');
-            document.getElementById('total-trx').innerText = allTransactions.filter(d => new Date(d.created_at).getFullYear() === now.getFullYear()).length;
-
-            renderTabel(allTransactions);
+            document.getElementById('total-trx').innerText = dYear.length;
+            
+            renderTabel(data || []);
         }
 
         function renderTabel(data) {
             const tbody = document.getElementById('tabel-laporan');
-            if(data.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">Belum ada data penjualan.</td></tr>'; 
-                return; 
-            }
-            
+            if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">Belum ada data penjualan.</td></tr>'; return; }
             tbody.innerHTML = data.map(d => `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="p-4 text-gray-500">${new Date(d.created_at).toLocaleString('id-ID')}</td>
                     <td class="p-4"><b>Meja ${d.no_meja}</b> (${d.nama_konsumen})</td>
                     <td class="p-4">${d.metode_bayar==='qr'?'<span class="text-blue-600 font-bold">QRIS</span>':'<span class="text-orange-600 font-bold">TUNAI</span>'}</td>
                     <td class="p-4 text-right font-bold">Rp ${parseInt(d.total_bayar).toLocaleString('id-ID')}</td>
-                </tr>
-            `).join('');
+                </tr>`).join('');
         }
-<script>
-async function downloadCSV(periode) {
 
-    let startDate, endDate;
-    const now = new Date();
+        // --- FUNGSI DOWNLOAD BARU ANDA (SAYA MODIFIKASI SEDIKIT AGAR AMAN) ---
+        async function downloadCSV(periode) {
+            let startDate, endDate;
+            const now = new Date(); // Titik waktu saat ini
 
-    if (periode === 'hari') {
-        startDate = new Date(now.setHours(0,0,0,0));
-        endDate   = new Date(now.setHours(23,59,59,999));
-    }
-    else if (periode === 'minggu') {
-        endDate   = new Date();
-        startDate = new Date();
-        startDate.setDate(endDate.getDate() - 7);
-    }
-    else if (periode === 'bulan') {
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        endDate   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23,59,59);
-    }
-    else if (periode === 'tahun') {
-        startDate = new Date(now.getFullYear(), 0, 1);
-        endDate   = new Date(now.getFullYear(), 11, 31, 23,59,59);
-    }
+            if (periode === 'hari') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            }
+            else if (periode === 'minggu') {
+                endDate = new Date();
+                startDate = new Date();
+                startDate.setDate(endDate.getDate() - 7);
+            }
+            else if (periode === 'bulan') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            }
+            else if (periode === 'tahun') {
+                startDate = new Date(now.getFullYear(), 0, 1);
+                endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+            }
 
-    const { data, error } = await client
-        .from('pesanan')
-        .select('*')
-        .eq('status_bayar', 'lunas')
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString())
-        .order('created_at', { ascending: true });
+            const { data, error } = await client
+                .from('pesanan')
+                .select('*')
+                .eq('status_bayar', 'lunas')
+                .gte('created_at', startDate.toISOString())
+                .lte('created_at', endDate.toISOString())
+                .order('created_at', { ascending: true });
 
-    if (error || !data || data.length === 0) {
-        return Swal.fire('Kosong', 'Tidak ada data pada periode ini', 'info');
-    }
+            if (error || !data || data.length === 0) {
+                return Swal.fire('Kosong', 'Tidak ada data pada periode ini', 'info');
+            }
 
-    let totalOmzet = 0;
+            let totalOmzet = 0;
 
-    // BOM UTF-8 + delimiter ;
-    let csv = "data:text/csv;charset=utf-8,\uFEFF";
-    csv += "WAKTU;MEJA;KONSUMEN;METODE BAYAR;TOTAL BAYAR;CATATAN\n";
+            // --- BAGIAN INI SAYA TAMBAHKAN 'sep=;' AGAR EXCEL ANDA TIDAK RUSAK ---
+            let csv = "sep=;\n"; 
+            // -------------------------------------------------------------------
+            
+            csv += "WAKTU;MEJA;KONSUMEN;METODE BAYAR;TOTAL BAYAR;CATATAN\n";
 
-    data.forEach(d => {
-        totalOmzet += Number(d.total_bayar);
-
-        csv += [
-            `"${new Date(d.created_at).toLocaleString('id-ID')}"`,
-            `"${d.no_meja}"`,
-            `"${d.nama_konsumen}"`,
-            `"${d.metode_bayar === 'qr' ? 'QRIS' : 'TUNAI'}"`,
-            `"${d.total_bayar}"`,
-            `"${(d.catatan || '').replace(/(\r\n|\n|\r)/gm,' | ')}"`
-        ].join(";") + "\n";
-    });
-
-    // Baris rekap (penting untuk laporan keuangan)
-    csv += "\n";
-    csv += `;;;;TOTAL OMZET;"${totalOmzet}"\n`;
-
-    const link = document.createElement("a");
-    link.href = encodeURI(csv);
-    link.download = `Laporan_${periode}_${Date.now()}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-</script>
-
-
-        // --- 3. LOGIKA HAPUS SEMUA RIWAYAT (DANGER) ---
-        async function hapusSemuaRiwayat() {
-            const { value: konfirmasi } = await Swal.fire({
-                title: 'HAPUS SEMUA DATA?',
-                text: "PERINGATAN: Semua riwayat penjualan akan dihapus permanen dan tidak bisa kembali! Ketik 'KONFIRMASI' untuk melanjutkan.",
-                input: 'text',
-                icon: 'warning',
-                inputPlaceholder: 'Ketik KONFIRMASI disini...',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'YA, HAPUS SELAMANYA'
+            data.forEach(d => {
+                totalOmzet += Number(d.total_bayar);
+                // Kita ganti (;) di catatan jadi koma agar tidak merusak format CSV
+                let cleanNote = (d.catatan || '').replace(/(\r\n|\n|\r)/gm,' | ').replace(/;/g, ',');
+                
+                csv += [
+                    `"${new Date(d.created_at).toLocaleString('id-ID')}"`,
+                    `"${d.no_meja}"`,
+                    `"${d.nama_konsumen}"`,
+                    `"${d.metode_bayar === 'qr' ? 'QRIS' : 'TUNAI'}"`,
+                    `"${d.total_bayar}"`,
+                    `"${cleanNote}"`
+                ].join(";") + "\n";
             });
 
+            // Baris rekap total
+            csv += "\n";
+            csv += `;;;;TOTAL OMZET;"${totalOmzet}"\n`;
+
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Laporan_${periode}_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function hapusSemuaRiwayat() {
+            const { value: konfirmasi } = await Swal.fire({ title: 'HAPUS SEMUA DATA?', text: "Ketik 'KONFIRMASI' untuk menghapus permanen.", input: 'text', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'YA, HAPUS' });
             if (konfirmasi === 'KONFIRMASI') {
                 const { error } = await client.from('pesanan').delete().neq('id', 0);
-                
-                if (error) {
-                    Swal.fire('Gagal', 'Gagal menghapus database. Pastikan Policy Supabase mengizinkan Delete All.', 'error');
-                } else {
-                    Swal.fire('TERHAPUS', 'Database penjualan telah di-reset menjadi 0.', 'success');
-                    initLaporan();
-                }
-            } else if (konfirmasi) {
-                Swal.fire('Batal', 'Kode konfirmasi salah.', 'error');
+                if (error) Swal.fire('Gagal', 'Gagal menghapus.', 'error');
+                else { Swal.fire('TERHAPUS', 'Data bersih.', 'success'); initLaporan(); }
             }
         }
 
-        // --- 4. LOGIKA MANAJEMEN MENU ---
+        // --- MENU LOGIC ---
         async function initMenu() {
             const container = document.getElementById('list-menu');
             const { data } = await client.from('menu').select('*').order('id', {ascending: false});
-            
-            if (!data || data.length === 0) { 
-                container.innerHTML = '<div class="text-center col-span-full text-gray-500">Belum ada menu. Silakan tambah menu baru.</div>'; 
-                return; 
-            }
-            
+            if (!data || data.length === 0) { container.innerHTML = '<div class="text-center col-span-full">Belum ada menu.</div>'; return; }
             container.innerHTML = data.map(m => `
-                <div class="bg-white rounded-xl shadow border p-4 relative group hover:shadow-lg transition">
-                    <img src="${m.gambar}" class="w-full h-32 object-cover rounded bg-gray-200 mb-3">
-                    <button onclick="hapusMenu(${m.id})" class="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full shadow hover:bg-red-700 flex items-center justify-center transition">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                    <h4 class="font-bold text-gray-800 text-lg">${m.nama}</h4>
-                    <p class="text-orange-600 font-bold mb-2">Rp ${m.harga.toLocaleString()}</p>
-                    <button onclick="toggleStok(${m.id}, ${m.tersedia})" class="w-full py-2 text-xs font-bold rounded uppercase transition ${m.tersedia ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
-                        ${m.tersedia ? 'TERSEDIA' : 'HABIS'}
-                    </button>
-                </div>
-            `).join('');
+                <div class="bg-white rounded-xl shadow border p-4 relative group">
+                    <img src="${m.gambar}" class="w-full h-32 object-cover rounded bg-gray-200 mb-2">
+                    <button onclick="hapusMenu(${m.id})" class="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full shadow hover:bg-red-700"><i class="fa-solid fa-trash"></i></button>
+                    <h4 class="font-bold">${m.nama}</h4> <p class="text-orange-600 font-bold">Rp ${m.harga.toLocaleString()}</p>
+                    <button onclick="toggleStok(${m.id}, ${m.tersedia})" class="mt-2 w-full py-1 text-xs font-bold rounded ${m.tersedia?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${m.tersedia?'TERSEDIA':'HABIS'}</button>
+                </div>`).join('');
         }
 
         async function tambahMenu() {
-            const nama = document.getElementById('nama-menu').value;
-            const harga = document.getElementById('harga-menu').value;
-            const kat = document.getElementById('kategori-menu').value;
-            const img = document.getElementById('gambar-menu').value;
-            
-            if(!nama || !harga) return Swal.fire('Eits!', 'Isi nama dan harga dulu dong.', 'warning');
-            
-            await client.from('menu').insert([{
-                nama: nama, 
-                harga: parseInt(harga), 
-                kategori: kat, 
-                gambar: img || 'https://via.placeholder.com/150', 
-                tersedia: true
-            }]);
-            
-            document.getElementById('nama-menu').value = ''; 
-            document.getElementById('harga-menu').value = '';
-            document.getElementById('gambar-menu').value = '';
-            
-            Swal.fire('Sukses','Menu berhasil ditambahkan!','success'); 
-            initMenu();
+            const nama = document.getElementById('nama-menu').value; const harga = document.getElementById('harga-menu').value;
+            const kat = document.getElementById('kategori-menu').value; const img = document.getElementById('gambar-menu').value;
+            if(!nama || !harga) return Swal.fire('Isi nama & harga!', '', 'warning');
+            await client.from('menu').insert([{nama, harga:parseInt(harga), kategori:kat, gambar:img||'https://via.placeholder.com/150', tersedia:true}]);
+            document.getElementById('nama-menu').value = ''; document.getElementById('harga-menu').value = '';
+            Swal.fire('Sukses','Menu ditambah','success'); initMenu();
         }
 
-        async function hapusMenu(id) {
-            const result = await Swal.fire({
-                title: 'Hapus Menu?',
-                text: "Menu ini akan hilang dari daftar.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Ya, Hapus'
-            });
-
-            if(result.isConfirmed) { 
-                await client.from('menu').delete().eq('id', id); 
-                initMenu(); 
-            }
-        }
-
-        async function toggleStok(id, stat) {
-            await client.from('menu').update({tersedia: !stat}).eq('id', id); 
-            initMenu();
-        }
+        async function hapusMenu(id) { if(confirm("Hapus?")) { await client.from('menu').delete().eq('id', id); initMenu(); } }
+        async function toggleStok(id, stat) { await client.from('menu').update({tersedia:!stat}).eq('id', id); initMenu(); }
 
         initLaporan();
     </script>
 </body>
 </html>
-
