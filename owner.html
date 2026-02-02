@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OWNER DASHBOARD (PRO)</title>
+    <title>OWNER DASHBOARD (PREMIUM)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -24,7 +24,7 @@
                 <i class="fa-solid fa-user-tie text-2xl"></i>
                 <div>
                     <h1 class="font-bold text-xl tracking-wider">OWNER PANEL</h1>
-                    <p class="text-[10px] text-blue-200">Laporan & Manajemen Menu</p>
+                    <p class="text-[10px] text-blue-200">Manajemen Laporan & Menu</p>
                 </div>
             </div>
             <button onclick="logout()" class="bg-red-500 hover:bg-red-400 px-4 py-2 rounded text-sm font-bold shadow transition">LOGOUT</button>
@@ -41,14 +41,15 @@
     <div class="max-w-7xl mx-auto p-6">
 
         <div id="view-laporan">
-            
-            <div class="bg-white p-4 rounded-xl shadow-sm mb-6 border border-gray-200">
-                <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-file-invoice text-green-600"></i> EXPORT & CETAK</h3>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    <button onclick="downloadCSV('hari')" class="bg-green-100 text-green-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-green-200 border border-green-200 flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> Harian</button>
-                    <button onclick="downloadCSV('minggu')" class="bg-blue-100 text-blue-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-blue-200 border border-blue-200 flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> Mingguan</button>
-                    <button onclick="downloadCSV('bulan')" class="bg-indigo-100 text-indigo-800 py-2 px-4 rounded-lg text-sm font-bold hover:bg-indigo-200 border border-indigo-200 flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> Bulanan</button>
-                    <button onclick="cetakStrukHarian()" class="col-span-2 md:col-span-1 bg-orange-600 text-white py-2 px-4 rounded-lg text-sm font-bold hover:bg-orange-500 border border-orange-600 flex items-center justify-center gap-2 shadow-md"><i class="fa-solid fa-print"></i> STRUK HARIAN</button>
+            <div class="bg-white p-5 rounded-xl shadow-sm mb-6 border border-gray-200">
+                <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2"><i class="fa-solid fa-file-export text-green-600"></i> UNDUH LAPORAN (SEMUA DATA TERSEDIA)</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <button onclick="downloadCSV('hari')" class="bg-green-100 text-green-800 py-2 px-3 rounded-lg text-xs font-bold hover:bg-green-200 border border-green-200"><i class="fa-solid fa-download"></i> Harian</button>
+                    <button onclick="downloadCSV('minggu')" class="bg-blue-100 text-blue-800 py-2 px-3 rounded-lg text-xs font-bold hover:bg-blue-200 border border-blue-200"><i class="fa-solid fa-download"></i> 7 Hari</button>
+                    <button onclick="downloadCSV('bulan')" class="bg-indigo-100 text-indigo-800 py-2 px-3 rounded-lg text-xs font-bold hover:bg-indigo-200 border border-indigo-200"><i class="fa-solid fa-download"></i> Bulan Ini</button>
+                    <button onclick="downloadCSV('tahun')" class="bg-purple-100 text-purple-800 py-2 px-3 rounded-lg text-xs font-bold hover:bg-purple-200 border border-purple-200"><i class="fa-solid fa-download"></i> Tahun Ini</button>
+                    <button onclick="downloadCSV('semua')" class="bg-gray-800 text-white py-2 px-3 rounded-lg text-xs font-bold hover:bg-black border border-gray-900"><i class="fa-solid fa-database"></i> Semua Data</button>
+                    <button onclick="cetakStrukHarian()" class="bg-orange-600 text-white py-2 px-3 rounded-lg text-xs font-bold hover:bg-orange-500 shadow-md"><i class="fa-solid fa-print"></i> STRUK HARI INI</button>
                 </div>
             </div>
 
@@ -62,17 +63,17 @@
                     <h3 id="omzet-bulan" class="text-3xl font-black text-green-900 mt-2">Rp 0</h3>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
-                    <p class="text-gray-500 text-xs font-bold uppercase">Total Transaksi (Tahun)</p>
+                    <p class="text-gray-500 text-xs font-bold uppercase">Total Transaksi (Realtime)</p>
                     <h3 id="total-trx" class="text-3xl font-black text-purple-900 mt-2">0</h3>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-10">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-10 border border-gray-200">
                 <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
-                    <h2 class="font-bold text-gray-700">RIWAYAT PESANAN (LUNAS)</h2>
+                    <h2 class="font-bold text-gray-700">50 PESANAN TERBARU</h2>
                     <button onclick="initLaporan()" class="text-sm text-blue-600 hover:underline"><i class="fa-solid fa-sync"></i> Refresh</button>
                 </div>
-                <div class="overflow-x-auto max-h-[400px]">
+                <div class="overflow-x-auto max-h-[500px]">
                     <table class="w-full text-left border-collapse text-sm">
                         <thead class="bg-gray-100 text-gray-600 uppercase text-xs sticky top-0">
                             <tr>
@@ -82,14 +83,14 @@
                                 <th class="p-4 border-b text-right">Total</th>
                             </tr>
                         </thead>
-                        <tbody id="tabel-laporan"><tr><td colspan="4" class="p-8 text-center">Loading...</td></tr></tbody>
+                        <tbody id="tabel-laporan"><tr><td colspan="4" class="p-8 text-center">Loading Data...</td></tr></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-                <h3 class="text-red-700 font-bold mb-2"><i class="fa-solid fa-triangle-exclamation"></i> DANGER ZONE</h3>
-                <button onclick="hapusSemuaRiwayat()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow transition">HAPUS SEMUA RIWAYAT</button>
+                <h3 class="text-red-700 font-bold mb-2 uppercase text-xs tracking-widest"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h3>
+                <button onclick="hapusSemuaRiwayat()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow transition text-sm">RESET SEMUA RIWAYAT PENJUALAN</button>
             </div>
             <br><br>
         </div>
@@ -107,7 +108,7 @@
                     </select>
                     <input type="text" id="gambar-menu" placeholder="Link Gambar (URL)" class="p-3 border rounded-lg w-full">
                 </div>
-                <button onclick="tambahMenu()" class="mt-4 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow transition">SIMPAN MENU</button>
+                <button onclick="tambahMenu()" class="mt-4 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow transition">SIMPAN MENU KE SISTEM</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="list-menu"></div>
         </div>
@@ -118,9 +119,11 @@
         const SUPABASE_KEY = 'sb_publishable_gyKCFApEbb42xicDzLDGMw_L0W4lzyb'; 
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        function logout() { sessionStorage.removeItem('role'); window.location.href = 'login.html'; }
+
         function gantiTab(tab) {
-            const btnLap = document.getElementById('tab-laporan'); const btnMen = document.getElementById('tab-menu');
             const viewLap = document.getElementById('view-laporan'); const viewMen = document.getElementById('view-menu');
+            const btnLap = document.getElementById('tab-laporan'); const btnMen = document.getElementById('tab-menu');
             if (tab === 'laporan') {
                 viewLap.classList.remove('hidden'); viewMen.classList.add('hidden');
                 btnLap.className = "flex-1 py-4 font-bold text-blue-900 border-b-4 border-blue-900 bg-blue-50 transition";
@@ -133,138 +136,125 @@
                 initMenu();
             }
         }
-        function logout() { sessionStorage.removeItem('role'); window.location.href = 'login.html'; }
 
-        // --- DASHBOARD DATA ---
         async function initLaporan() {
-            const { data } = await client.from('pesanan').select('*').eq('status_bayar', 'lunas').order('created_at', { ascending: false }).limit(50);
+            // Tampilan Tabel: Batasi 50 saja agar web tidak berat
+            const { data: recentTrx } = await client.from('pesanan').select('*').eq('status_bayar', 'lunas').order('created_at', { ascending: false }).limit(50);
+            
+            // Perhitungan Omzet: Ambil semua data ringkas tanpa limit
+            const { data: summaryData } = await client.from('pesanan').select('total_bayar, created_at').eq('status_bayar', 'lunas');
             
             const now = new Date();
-            const { data: allData } = await client.from('pesanan').select('total_bayar, created_at').eq('status_bayar', 'lunas');
-            
-            const dHari = allData.filter(d => new Date(d.created_at).toDateString() === now.toDateString());
-            const dBulan = allData.filter(d => new Date(d.created_at).getMonth() === now.getMonth() && new Date(d.created_at).getFullYear() === now.getFullYear());
-            const dYear = allData.filter(d => new Date(d.created_at).getFullYear() === now.getFullYear());
+            const dHari = summaryData.filter(d => new Date(d.created_at).toDateString() === now.toDateString());
+            const dBulan = summaryData.filter(d => new Date(d.created_at).getMonth() === now.getMonth() && new Date(d.created_at).getFullYear() === now.getFullYear());
 
             document.getElementById('omzet-hari').innerText = 'Rp ' + dHari.reduce((a,b)=>a+b.total_bayar,0).toLocaleString('id-ID');
             document.getElementById('omzet-bulan').innerText = 'Rp ' + dBulan.reduce((a,b)=>a+b.total_bayar,0).toLocaleString('id-ID');
-            document.getElementById('total-trx').innerText = dYear.length;
+            document.getElementById('total-trx').innerText = summaryData.length.toLocaleString('id-ID');
             
-            renderTabel(data || []);
+            renderTabel(recentTrx || []);
         }
 
         function renderTabel(data) {
             const tbody = document.getElementById('tabel-laporan');
-            if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">Belum ada data penjualan.</td></tr>'; return; }
+            if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">Belum ada transaksi lunas.</td></tr>'; return; }
             tbody.innerHTML = data.map(d => `
                 <tr class="border-b hover:bg-gray-50">
-                    <td class="p-4 text-gray-500">${new Date(d.created_at).toLocaleString('id-ID')}</td>
+                    <td class="p-4 text-gray-500 text-xs">${new Date(d.created_at).toLocaleString('id-ID')}</td>
                     <td class="p-4"><b>Meja ${d.no_meja}</b> (${d.nama_konsumen})</td>
-                    <td class="p-4">${d.metode_bayar==='qr'?'<span class="text-blue-600 font-bold">QRIS</span>':'<span class="text-orange-600 font-bold">TUNAI</span>'}</td>
+                    <td class="p-4 text-xs">${d.metode_bayar==='qr'?'<span class="text-blue-600 font-bold">QRIS</span>':'<span class="text-orange-600 font-bold">TUNAI</span>'}</td>
                     <td class="p-4 text-right font-bold">Rp ${parseInt(d.total_bayar).toLocaleString('id-ID')}</td>
                 </tr>`).join('');
         }
 
-        // --- FUNGSI CETAK STRUK HARIAN (BARU) ---
+        // --- FIX DOWNLOAD CSV BULANAN & SEMUA DATA ---
+        async function downloadCSV(periode) {
+            let startDate, endDate;
+            const now = new Date();
+
+            if (periode === 'hari') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            }
+            else if (periode === 'minggu') {
+                endDate = new Date();
+                startDate = new Date();
+                startDate.setDate(endDate.getDate() - 7);
+            }
+            else if (periode === 'bulan') {
+                // Dimulai dari tanggal 1 bulan ini
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+                // Sampai akhir bulan ini
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            }
+            else if (periode === 'tahun') {
+                startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
+                endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+            }
+            else if (periode === 'semua') {
+                // Ambil semua data tanpa filter tanggal
+                startDate = new Date(2000, 0, 1);
+                endDate = new Date(2100, 0, 1);
+            }
+
+            Swal.fire({ title: 'Menyiapkan File...', text: 'Mengambil data dari server', didOpen: () => Swal.showLoading() });
+
+            const { data, error } = await client
+                .from('pesanan')
+                .select('*')
+                .eq('status_bayar', 'lunas')
+                .gte('created_at', startDate.toISOString())
+                .lte('created_at', endDate.toISOString())
+                .order('created_at', { ascending: true });
+
+            Swal.close();
+
+            if (error || !data || data.length === 0) {
+                return Swal.fire('Data Kosong', 'Tidak ditemukan riwayat lunas untuk periode ini.', 'info');
+            }
+
+            let totalOmzet = 0;
+            let csv = "sep=;\nWAKTU;MEJA;KONSUMEN;METODE BAYAR;TOTAL BAYAR;CATATAN\n";
+
+            data.forEach(d => {
+                totalOmzet += Number(d.total_bayar);
+                let cleanNote = (d.catatan || '').replace(/(\r\n|\n|\r)/gm,' | ').replace(/;/g, ',');
+                csv += `"${new Date(d.created_at).toLocaleString('id-ID')}";"${d.no_meja}";"${d.nama_konsumen}";"${d.metode_bayar.toUpperCase()}";"${d.total_bayar}";"${cleanNote}"\n`;
+            });
+
+            csv += `\n;;;;TOTAL OMZET;"${totalOmzet}"\n`;
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Laporan_Cafe_${periode}_${Date.now()}.csv`;
+            link.click();
+        }
+
         async function cetakStrukHarian() {
             const now = new Date();
             const startStr = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString();
             const endStr = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
 
-            // Ambil data hari ini saja
             const { data } = await client.from('pesanan').select('*').eq('status_bayar', 'lunas').gte('created_at', startStr).lte('created_at', endStr);
+            if(!data || data.length === 0) return Swal.fire('Kosong', 'Belum ada transaksi hari ini.', 'info');
 
-            if(!data || data.length === 0) return Swal.fire('Data Kosong', 'Belum ada transaksi hari ini.', 'info');
-
-            // Hitung Rekap
-            let totalOmzet = 0;
-            let totalCash = 0;
-            let totalQR = 0;
-            let totalTrx = data.length;
-
+            let totalOmzet = 0, totalCash = 0, totalQR = 0;
             data.forEach(d => {
                 totalOmzet += d.total_bayar;
-                if(d.metode_bayar === 'qr') totalQR += d.total_bayar;
-                else totalCash += d.total_bayar;
+                if(d.metode_bayar === 'qr') totalQR += d.total_bayar; else totalCash += d.total_bayar;
             });
 
-            // Format Tampilan HTML (Untuk Popup)
             const tglIndo = now.toLocaleString('id-ID');
-            const strukHTML = `
-                <div class="text-left font-mono text-sm leading-relaxed p-2 bg-white text-black border-2 border-dashed border-gray-300">
-                    <div class="text-center font-bold mb-2 pb-2 border-b border-dashed border-gray-400">
-                        LAPORAN HARIAN<br>${tglIndo}
-                    </div>
-                    <div class="flex justify-between"><span>Total Trx:</span> <b>${totalTrx}</b></div>
-                    <div class="border-t border-dashed border-gray-300 my-1"></div>
-                    <div class="flex justify-between text-green-700"><span>QRIS (Bank):</span> <b>Rp ${totalQR.toLocaleString('id-ID')}</b></div>
-                    <div class="flex justify-between text-orange-700"><span>TUNAI (Laci):</span> <b>Rp ${totalCash.toLocaleString('id-ID')}</b></div>
-                    <div class="border-t border-black my-1"></div>
-                    <div class="flex justify-between text-lg font-black"><span>TOTAL:</span> <span>Rp ${totalOmzet.toLocaleString('id-ID')}</span></div>
-                    <div class="text-center mt-2 text-xs text-gray-500">Dicetak oleh Owner Panel</div>
-                </div>
-            `;
-
-            // Tampilkan Pilihan Cetak
-            Swal.fire({
-                title: 'STRUK HARIAN',
-                html: strukHTML,
-                showDenyButton: true,
-                showCancelButton: true,
-                confirmButtonText: '<i class="fa-solid fa-print"></i> PRINT RAWBT (HP)',
-                denyButtonText: '<i class="fa-solid fa-file-pdf"></i> PRINT BIASA (PC)',
-                confirmButtonColor: '#ea580c',
-                denyButtonColor: '#3b82f6',
-                cancelButtonText: 'Tutup'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // PRINT RAWBT (ESC/POS)
-                    let raw = `\x1b\x40\x1b\x61\x01\x1b\x21\x10LAPORAN HARIAN\n\x1b\x21\x00${tglIndo}\n--------------------------------\n\x1b\x61\x00Total Trx : ${totalTrx}\n--------------------------------\nQRIS (Bank): Rp ${totalQR.toLocaleString('id-ID')}\nTunai(Laci): Rp ${totalCash.toLocaleString('id-ID')}\n--------------------------------\n\x1b\x21\x10TOTAL     : Rp ${totalOmzet.toLocaleString('id-ID')}\n\x1b\x21\x00--------------------------------\n\x1b\x61\x01Owner Panel\n\n\n`;
-                    window.location.href = "rawbt:data=" + encodeURIComponent(raw);
-                } else if (result.isDenied) {
-                    // PRINT BROWSER BIASA
-                    let printWindow = window.open('', '', 'height=600,width=400');
-                    printWindow.document.write('<html><head><title>Laporan Harian</title></head><body >');
-                    printWindow.document.write(strukHTML);
-                    printWindow.document.write('<script>window.print(); window.close();<\/script>');
-                    printWindow.document.write('</body></html>');
-                    printWindow.document.close();
-                }
-            });
-        }
-
-        // --- CSV DOWNLOAD ---
-        async function downloadCSV(periode) {
-            let startDate, endDate;
-            const now = new Date(); 
-            if (periode === 'hari') { startDate = new Date(now.setHours(0,0,0,0)); endDate = new Date(now.setHours(23,59,59,999)); }
-            else if (periode === 'minggu') { endDate = new Date(); startDate = new Date(); startDate.setDate(endDate.getDate() - 7); }
-            else if (periode === 'bulan') { startDate = new Date(now.getFullYear(), now.getMonth(), 1); endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59); }
-            else if (periode === 'tahun') { startDate = new Date(now.getFullYear(), 0, 1); endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59); }
-
-            const { data, error } = await client.from('pesanan').select('*').eq('status_bayar', 'lunas').gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()).order('created_at', { ascending: true });
-            if (error || !data || data.length === 0) return Swal.fire('Kosong', 'Tidak ada data', 'info');
-
-            let totalOmzet = 0;
-            let csv = "sep=;\nWAKTU;MEJA;KONSUMEN;METODE BAYAR;TOTAL BAYAR;CATATAN\n";
-            data.forEach(d => {
-                totalOmzet += Number(d.total_bayar);
-                let cleanNote = (d.catatan || '').replace(/(\r\n|\n|\r)/gm,' | ').replace(/;/g, ',');
-                csv += `"${new Date(d.created_at).toLocaleString('id-ID')}";"${d.no_meja}";"${d.nama_konsumen}";"${d.metode_bayar === 'qr' ? 'QRIS' : 'TUNAI'}";"${d.total_bayar}";"${cleanNote}"\n`;
-            });
-            csv += `\n;;;;TOTAL OMZET;"${totalOmzet}"\n`;
-
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-            link.download = `Laporan_${periode}_${Date.now()}.csv`;
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            let raw = `\x1b\x40\x1b\x61\x01\x1b\x21\x10LAPORAN HARIAN\n\x1b\x21\x00${tglIndo}\n--------------------------------\n\x1b\x61\x00Total Trx : ${data.length}\nQRIS      : Rp ${totalQR.toLocaleString('id-ID')}\nTUNAI     : Rp ${totalCash.toLocaleString('id-ID')}\n--------------------------------\n\x1b\x21\x10TOTAL     : Rp ${totalOmzet.toLocaleString('id-ID')}\n\x1b\x61\x01\nTerima Kasih\n\n\n`;
+            window.location.href = "rawbt:data=" + encodeURIComponent(raw);
         }
 
         async function hapusSemuaRiwayat() {
-            const { value: konfirmasi } = await Swal.fire({ title: 'HAPUS SEMUA DATA?', text: "Ketik 'KONFIRMASI'", input: 'text', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' });
+            const { value: konfirmasi } = await Swal.fire({ title: 'HAPUS PERMANEN?', text: "Ketik 'KONFIRMASI' untuk menghapus seluruh riwayat penjualan.", input: 'text', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'HAPUS SEKARANG' });
             if (konfirmasi === 'KONFIRMASI') {
                 const { error } = await client.from('pesanan').delete().neq('id', 0);
-                if (!error) { Swal.fire('TERHAPUS', 'Data bersih.', 'success'); initLaporan(); }
+                if (error) Swal.fire('Gagal', 'Gagal menghapus.', 'error'); else { Swal.fire('BERSIH', 'Seluruh riwayat penjualan telah dihapus.', 'success'); initLaporan(); }
             }
         }
 
@@ -272,26 +262,38 @@
         async function initMenu() {
             const container = document.getElementById('list-menu');
             const { data } = await client.from('menu').select('*').order('id', {ascending: false});
-            if (!data || data.length === 0) { container.innerHTML = '<div class="text-center col-span-full">Belum ada menu.</div>'; return; }
+            if (!data || data.length === 0) { container.innerHTML = '<div class="text-center col-span-full py-10">Belum ada menu terdaftar.</div>'; return; }
             container.innerHTML = data.map(m => `
-                <div class="bg-white rounded-xl shadow border p-4 relative group">
-                    <img src="${m.gambar}" class="w-full h-32 object-cover rounded bg-gray-200 mb-2">
-                    <button onclick="hapusMenu(${m.id})" class="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full shadow hover:bg-red-700"><i class="fa-solid fa-trash"></i></button>
-                    <h4 class="font-bold">${m.nama}</h4> <p class="text-orange-600 font-bold">Rp ${m.harga.toLocaleString()}</p>
-                    <button onclick="toggleStok(${m.id}, ${m.tersedia})" class="mt-2 w-full py-1 text-xs font-bold rounded ${m.tersedia?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${m.tersedia?'TERSEDIA':'HABIS'}</button>
+                <div class="bg-white rounded-xl shadow border p-4 relative">
+                    <img src="${m.gambar}" class="w-full h-32 object-cover rounded bg-gray-100 mb-2">
+                    <button onclick="hapusMenu(${m.id})" class="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full shadow hover:bg-red-700 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                    <h4 class="font-bold text-gray-800">${m.nama}</h4> 
+                    <p class="text-orange-600 font-bold">Rp ${m.harga.toLocaleString('id-ID')}</p>
+                    <button onclick="toggleStok(${m.id}, ${m.tersedia})" class="mt-2 w-full py-2 text-xs font-bold rounded-lg border ${m.tersedia?'bg-green-50 text-green-700 border-green-200':'bg-red-50 text-red-700 border-red-200'}">${m.tersedia?'STOK TERSEDIA':'STOK HABIS'}</button>
                 </div>`).join('');
         }
 
         async function tambahMenu() {
-            const nama = document.getElementById('nama-menu').value; const harga = document.getElementById('harga-menu').value;
-            const kat = document.getElementById('kategori-menu').value; const img = document.getElementById('gambar-menu').value;
-            if(!nama || !harga) return Swal.fire('Isi nama & harga!', '', 'warning');
+            const nama = document.getElementById('nama-menu').value; 
+            const harga = document.getElementById('harga-menu').value;
+            const kat = document.getElementById('kategori-menu').value; 
+            const img = document.getElementById('gambar-menu').value;
+            if(!nama || !harga) return Swal.fire('Data Belum Lengkap!', 'Nama dan harga wajib diisi.', 'warning');
+            
+            Swal.fire({ title: 'Menyimpan...', didOpen: () => Swal.showLoading() });
             await client.from('menu').insert([{nama, harga:parseInt(harga), kategori:kat, gambar:img||'https://via.placeholder.com/150', tersedia:true}]);
-            document.getElementById('nama-menu').value = ''; document.getElementById('harga-menu').value = '';
-            Swal.fire('Sukses','Menu ditambah','success'); initMenu();
+            
+            document.getElementById('nama-menu').value = ''; 
+            document.getElementById('harga-menu').value = '';
+            Swal.fire('Sukses','Menu baru berhasil ditambahkan','success'); 
+            initMenu();
         }
 
-        async function hapusMenu(id) { if(confirm("Hapus?")) { await client.from('menu').delete().eq('id', id); initMenu(); } }
+        async function hapusMenu(id) { 
+            const res = await Swal.fire({ title: 'Hapus Menu?', text: "Menu akan hilang selamanya.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, Hapus' });
+            if(res.isConfirmed) { await client.from('menu').delete().eq('id', id); initMenu(); } 
+        }
+        
         async function toggleStok(id, stat) { await client.from('menu').update({tersedia:!stat}).eq('id', id); initMenu(); }
 
         initLaporan();
