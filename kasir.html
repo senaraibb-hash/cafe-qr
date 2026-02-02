@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASIR MONITOR PRO - GOOGLE VOICE & RAWBT</title>
+    <title>KASIR MONITOR PRO - GOOGLE VOICE & INPUT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -17,9 +17,10 @@
         .pesanan-baru { animation: kedip-border 1.5s infinite; border-width: 3px; transform: scale(1.01); z-index: 10; }
         body { background-color: #0f172a; scroll-behavior: smooth; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="text-white min-h-screen font-sans">
+<body class="text-white min-h-screen font-sans overflow-x-hidden">
 
     <script>
         if (sessionStorage.getItem('role') !== 'kasir_valid') {
@@ -31,28 +32,28 @@
         <div class="bg-blue-600 w-28 h-28 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-2xl shadow-blue-500/40">
             <i class="fa-solid fa-play text-4xl ml-2"></i>
         </div>
-        <h1 class="text-3xl font-black tracking-tighter mb-2">AKTIFKAN MONITOR</h1>
-        <p class="text-slate-500 text-xs uppercase tracking-[0.3em]">Klik untuk Sinkronisasi Suara & Data</p>
+        <h1 class="text-3xl font-black tracking-tighter mb-2 uppercase">Aktifkan Sistem</h1>
+        <p class="text-slate-500 text-xs uppercase tracking-[0.3em]">Klik untuk Suara & Sinkronisasi</p>
     </div>
 
     <nav class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-40 glass shadow-2xl">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <div class="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-900/40">
-                    <i class="fa-solid fa-desktop text-xl"></i>
+                <div class="p-3 bg-blue-600 rounded-2xl shadow-lg">
+                    <i class="fa-solid fa-cash-register text-xl"></i>
                 </div>
                 <div>
                     <h1 class="text-xl font-black leading-none tracking-tight">KASIR <span class="text-blue-500">MONITOR</span></h1>
                     <div id="status-koneksi" class="flex items-center gap-2 text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-widest">
-                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Offline
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Live
                     </div>
                 </div>
             </div>
             <div class="flex gap-2">
-                <button onclick="testSuara()" class="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold transition border border-slate-700">
-                    <i class="fa-solid fa-bullhorn mr-2"></i> TES SUARA
+                <button onclick="modalTambahPesanan()" class="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-xl text-xs font-black shadow-lg transition border border-green-400/20 uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle"></i> Pesan Langsung
                 </button>
-                <button onclick="tutupToko()" class="px-5 py-3 bg-red-600 hover:bg-red-500 rounded-xl text-xs font-black shadow-lg shadow-red-900/20 transition border border-red-400/20 uppercase">
+                <button onclick="tutupToko()" class="px-5 py-3 bg-red-600 hover:bg-red-500 rounded-xl text-xs font-black transition uppercase">
                     Tutup Buku
                 </button>
             </div>
@@ -67,7 +68,7 @@
                 <div class="absolute top-6 right-8 text-yellow-500/20"><i class="fa-solid fa-receipt text-6xl"></i></div>
             </div>
             <div onclick="gantiFilter('lunas')" id="tab-lunas" class="bg-slate-800 p-8 rounded-[2.5rem] border-2 border-transparent cursor-pointer shadow-2xl relative transition-all active:scale-95 opacity-60">
-                <h3 class="text-slate-500 font-black uppercase text-xs tracking-widest mb-2">Sudah Selesai</h3>
+                <h3 class="text-slate-500 font-black uppercase text-xs tracking-widest mb-2">Selesai</h3>
                 <p id="count-lunas" class="text-6xl font-black italic">0</p>
                 <div class="absolute top-6 right-8 text-green-500/20"><i class="fa-solid fa-check-circle text-6xl"></i></div>
             </div>
@@ -79,7 +80,7 @@
 
         <div id="grid-pesanan" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div class="col-span-full py-20 text-center text-slate-600 border-2 border-dashed border-slate-800 rounded-[3rem]">
-                <p class="italic">Menghubungkan ke database...</p>
+                <p class="italic">Memuat data...</p>
             </div>
         </div>
     </div>
@@ -94,32 +95,20 @@
         let filterStatus = 'pending';
         let audioOk = false;
 
-        // --- GOOGLE VOICE ENGINE ---
         function bicara(teks) {
             if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(teks);
             msg.lang = 'id-ID';
             msg.rate = 0.95; 
-            msg.pitch = 1.0;
-            const voices = window.speechSynthesis.getVoices();
-            const gVoice = voices.find(v => v.name.includes('Google') && v.lang.includes('id'));
-            if (gVoice) msg.voice = gVoice;
             window.speechSynthesis.speak(msg);
         }
 
         function mulaiAplikasi() {
             document.getElementById('overlay-start').style.display = 'none';
-            if (!audioOk) {
-                bell.play().then(() => bell.pause());
-                audioOk = true;
-            }
+            if (!audioOk) { bell.play().then(() => bell.pause()); audioOk = true; }
             ambilData();
-            bicara("Sistem monitor diaktifkan.");
-        }
-
-        function testSuara() {
-            bicara("Tes suara Google berhasil. Sistem siap menerima pesanan.");
+            bicara("Sistem siap.");
         }
 
         async function ambilData() {
@@ -127,7 +116,6 @@
             if (!error) {
                 dataPesanan = data || [];
                 renderLayar();
-                document.getElementById('status-koneksi').innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500"></span> Live Monitoring`;
             }
         }
 
@@ -149,41 +137,36 @@
                 const isBaru = o.status_bayar === 'pending' ? 'pesanan-baru' : '';
                 const jam = new Date(o.created_at).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
                 const rupiah = parseInt(o.total_bayar).toLocaleString('id-ID');
-                const isQR = o.metode_bayar === 'qr';
 
                 return `
                 <div class="bg-slate-800 rounded-[2.5rem] overflow-hidden border border-slate-700 shadow-2xl flex flex-col transition-all duration-300 ${isBaru}">
-                    <div class="p-6 ${o.status_bayar === 'pending' ? 'bg-yellow-500/5' : 'bg-green-500/5'} border-b border-slate-700 flex justify-between items-start">
+                    <div class="p-6 border-b border-slate-700 flex justify-between items-start">
                         <div>
-                            <span class="text-[9px] font-black text-slate-500 block uppercase tracking-[0.2em] mb-1">${isQR ? 'QRIS PAYMENT' : 'CASH PAYMENT'}</span>
+                            <span class="text-[9px] font-black text-slate-500 block uppercase tracking-widest mb-1">${o.metode_bayar.toUpperCase()}</span>
                             <h3 class="text-4xl font-black tracking-tighter">MEJA ${o.no_meja}</h3>
                             <p class="text-sm font-bold text-blue-400 mt-1 uppercase">${o.nama_konsumen}</p>
                         </div>
                         <span class="text-[10px] font-mono text-slate-600 bg-slate-950 px-3 py-1 rounded-full">${jam}</span>
                     </div>
-
                     <div class="p-7 flex-grow">
-                        <div class="bg-slate-900/50 p-5 rounded-3xl border border-slate-700/50 shadow-inner min-h-[100px]">
+                        <div class="bg-slate-900/50 p-5 rounded-3xl border border-slate-700/50 shadow-inner">
                             <pre class="whitespace-pre-wrap font-mono text-sm text-slate-300 leading-relaxed">${o.catatan}</pre>
                         </div>
                     </div>
-
                     <div class="p-6 bg-slate-900/50 border-t border-slate-700 flex flex-col gap-3">
                         <div class="flex justify-between items-center px-2">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Tagihan</span>
-                            <span class="text-2xl font-black">Rp ${rupiah}</span>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total</span>
+                            <span class="text-2xl font-black text-white">Rp ${rupiah}</span>
                         </div>
-
-                        ${o.status_bayar === 'pending' && isQR ? 
-                            `<button onclick="lihatBukti('${o.bukti_url}')" class="w-full bg-amber-500 hover:bg-amber-400 text-white font-black py-3 rounded-2xl transition shadow-lg text-xs uppercase tracking-widest">
+                        ${o.status_bayar === 'pending' && o.metode_bayar === 'qr' ? 
+                            `<button onclick="lihatBukti('${o.bukti_url}')" class="w-full bg-amber-500 hover:bg-amber-400 text-white font-black py-3 rounded-2xl transition shadow-lg text-[10px] uppercase tracking-widest">
                                 <i class="fa-solid fa-camera mr-2"></i> Cek Bukti TF
                             </button>` : ''
                         }
-
                         <div class="flex gap-3">
                         ${o.status_bayar === 'pending' ? 
                             `<button onclick="konfirmasiLunas(${o.id}, ${o.total_bayar})" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition shadow-lg text-xs uppercase tracking-widest">Konfirmasi</button>` : 
-                            `<button onclick="printLagi('${o.no_meja}', '${o.nama_konsumen}', '${o.catatan.replace(/\n/g, '\\n')}', ${o.total_bayar}, '${o.created_at}')" class="flex-1 bg-slate-700 hover:bg-white hover:text-black text-white font-black py-4 rounded-2xl transition text-xs uppercase flex items-center justify-center gap-2 border border-slate-600"><i class="fa-solid fa-print"></i> Print Struk</button>`
+                            `<button onclick="printLagi('${o.no_meja}', '${o.nama_konsumen}', '${o.catatan.replace(/\n/g, '\\n')}', ${o.total_bayar}, '${o.created_at}')" class="flex-1 bg-slate-700 hover:bg-white hover:text-black text-white font-black py-4 rounded-2xl transition text-xs uppercase flex items-center justify-center gap-2 border border-slate-600"><i class="fa-solid fa-print"></i> Print</button>`
                         }
                         </div>
                     </div>
@@ -191,88 +174,98 @@
             }).join('');
         }
 
-        // --- REALTIME ENGINE ---
+        async function modalTambahPesanan() {
+            const { value: formValues } = await Swal.fire({
+                title: 'INPUT PESANAN KASIR',
+                background: '#1e293b',
+                color: '#fff',
+                html: `
+                    <div class="flex flex-col gap-3 text-left">
+                        <label class="text-xs font-bold text-slate-400 uppercase">Nomor Meja</label>
+                        <input id="sw-meja" class="p-3 rounded-xl bg-slate-700 border-none text-white w-full" type="number">
+                        <label class="text-xs font-bold text-slate-400 uppercase">Nama Pelanggan</label>
+                        <input id="sw-nama" class="p-3 rounded-xl bg-slate-700 border-none text-white w-full">
+                        <label class="text-xs font-bold text-slate-400 uppercase">Daftar Pesanan</label>
+                        <textarea id="sw-catatan" class="p-3 rounded-xl bg-slate-700 border-none text-white w-full h-24" placeholder="Contoh: 2 Kopi, 1 Nasi Goreng"></textarea>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Total Harga</label>
+                        <input id="sw-total" class="p-3 rounded-xl bg-slate-700 border-none text-white w-full" type="number">
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'SIMPAN & LUNASKAN',
+                confirmButtonColor: '#10B981',
+                preConfirm: () => {
+                    return {
+                        meja: document.getElementById('sw-meja').value,
+                        nama: document.getElementById('sw-nama').value,
+                        catatan: document.getElementById('sw-catatan').value,
+                        total: document.getElementById('sw-total').value
+                    }
+                }
+            });
+
+            if (formValues) {
+                if (!formValues.meja || !formValues.total) return Swal.fire('Error', 'Meja & Total wajib diisi!', 'error');
+                const { error } = await client.from('pesanan').insert([{
+                    no_meja: formValues.meja,
+                    nama_konsumen: formValues.nama || 'Pelanggan Kasir',
+                    catatan: formValues.catatan,
+                    total_bayar: formValues.total,
+                    metode_bayar: 'tunai',
+                    status_bayar: 'lunas',
+                    di_arsip: false
+                }]);
+                if (!error) {
+                    Swal.fire('Sukses', 'Pesanan disimpan ke riwayat.', 'success');
+                    ambilData();
+                }
+            }
+        }
+
         client.channel('monitor-pro').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pesanan' }, (payload) => {
-            const d = payload.new;
             bell.play().catch(e => {});
-            setTimeout(() => {
-                bicara(`Pesanan baru. Meja ${d.no_meja}. Atas nama ${d.nama_konsumen}.`);
-            }, 800);
+            bicara(`Pesanan baru. Meja ${payload.new.no_meja}.`);
             ambilData();
         }).subscribe();
 
-        // --- ACTIONS ---
         function lihatBukti(url) {
-            if (!url || url === "null") return Swal.fire('Gagal', 'Konsumen belum upload bukti.', 'error');
-            Swal.fire({
-                title: 'Bukti Pembayaran',
-                imageUrl: url,
-                confirmButtonText: 'TUTUP',
-                background: '#1e293b', color: '#fff'
-            });
+            Swal.fire({ title: 'Bukti Pembayaran', imageUrl: url, background: '#1e293b', color: '#fff' });
         }
 
         async function konfirmasiLunas(id, total) {
             const r = await Swal.fire({ 
-                title: 'Selesaikan?', text: `Tagihan Rp ${total.toLocaleString()}`, 
-                icon: 'question', showCancelButton: true, confirmButtonText: 'YA, LUNAS',
-                confirmButtonColor: '#10B981', background: '#1e293b', color: '#fff' 
+                title: 'Konfirmasi Lunas?', text: `Total Rp ${total.toLocaleString()}`, 
+                icon: 'question', showCancelButton: true, confirmButtonColor: '#10B981', background: '#1e293b', color: '#fff' 
             });
             if (r.isConfirmed) { 
                 await client.from('pesanan').update({ status_bayar: 'lunas' }).eq('id', id); 
                 ambilData(); 
-                bicara("Pesanan diproses.");
             }
         }
 
         async function tutupToko() {
-            const { value: pin } = await Swal.fire({ 
-                title: 'Tutup Shift?', text: "Data akan dipindahkan ke arsip.", 
-                input: 'password', inputPlaceholder: 'PIN Owner',
-                showCancelButton: true, background: '#1e293b', color: '#fff'
+            const r = await Swal.fire({
+                title: 'Arsipkan Semua?', text: 'Semua antrean hari ini akan dipindahkan ke laporan owner.',
+                icon: 'warning', showCancelButton: true, confirmButtonText: 'YA, TUTUP BUKU', background: '#1e293b', color: '#fff'
             });
-            if (pin === '1234') {
+            if (r.isConfirmed) {
                 await client.from('pesanan').update({ di_arsip: true }).eq('di_arsip', false);
                 ambilData();
-                Swal.fire('Berhasil', 'Antrean dikosongkan.', 'success');
+                Swal.fire('Selesai', 'Shift ditutup.', 'success');
             }
         }
 
         function gantiFilter(s) {
             filterStatus = s;
             document.getElementById('judul-list').innerText = s === 'pending' ? 'DAFTAR ANTRIAN DAPUR' : 'RIWAYAT SELESAI HARI INI';
-            document.getElementById('tab-pending').classList.toggle('border-yellow-500', s === 'pending');
-            document.getElementById('tab-pending').classList.toggle('opacity-60', s !== 'pending');
-            document.getElementById('tab-lunas').classList.toggle('border-green-500', s === 'lunas');
-            document.getElementById('tab-lunas').classList.toggle('opacity-60', s !== 'lunas');
+            document.getElementById('tab-pending').className = s === 'pending' ? 'bg-slate-800 p-8 rounded-[2.5rem] border-2 border-yellow-500 cursor-pointer shadow-2xl relative transition-all active:scale-95' : 'bg-slate-800 p-8 rounded-[2.5rem] border-2 border-transparent cursor-pointer shadow-2xl relative transition-all active:scale-95 opacity-60';
+            document.getElementById('tab-lunas').className = s === 'lunas' ? 'bg-slate-800 p-8 rounded-[2.5rem] border-2 border-green-500 cursor-pointer shadow-2xl relative transition-all active:scale-95' : 'bg-slate-800 p-8 rounded-[2.5rem] border-2 border-transparent cursor-pointer shadow-2xl relative transition-all active:scale-95 opacity-60';
             renderLayar();
         }
 
-        // --- PRINTING ENGINE (RAWBT) ---
         function printLagi(meja, nama, items, total, tgl) {
             const d = new Date(tgl).toLocaleString('id-ID');
-            const tot = parseInt(total).toLocaleString('id-ID');
-            // Format Struk Thermal 58mm
-            let s = "";
-            s += "\x1b\x40"; // Init
-            s += "\x1b\x61\x01"; // Center
-            s += "\x1b\x21\x30CAFE KAMI\n"; // Double height & width
-            s += "\x1b\x21\x00STRUK PEMBAYARAN\n";
-            s += "--------------------------------\n";
-            s += "\x1b\x61\x00"; // Left
-            s += `MEJA  : ${meja}\n`;
-            s += `NAMA  : ${nama}\n`;
-            s += `WAKTU : ${d}\n`;
-            s += "--------------------------------\n";
-            s += `${items}\n`;
-            s += "--------------------------------\n";
-            s += "\x1b\x61\x02"; // Right
-            s += `\x1b\x21\x10TOTAL : Rp ${tot}\n`;
-            s += "\x1b\x21\x00"; // Normal
-            s += "--------------------------------\n";
-            s += "\x1b\x61\x01"; // Center
-            s += "Terima Kasih!\n\n\n\n\x1d\x56\x00"; // Cut
-            
+            let s = `\x1b\x40\x1b\x61\x01\x1b\x21\x30CAFE KAMI\n\x1b\x21\x00STRUK PEMBAYARAN\n--------------------------------\n\x1b\x61\x00MEJA : ${meja}\nNAMA : ${nama}\n--------------------------------\n${items}\n--------------------------------\n\x1b\x61\x02TOTAL: Rp ${parseInt(total).toLocaleString()}\n\n\n\n\x1d\x56\x00`;
             window.location.href = "rawbt:data=" + encodeURIComponent(s);
         }
     </script>
